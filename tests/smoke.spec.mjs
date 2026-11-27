@@ -27,6 +27,15 @@ test('no two game files declare the same top-level name (that would blank the ga
   expect(dupes).toEqual([]);
 });
 
+test('the title screen shows, and Play starts Level 1', async ({ page }, testInfo) => {
+  await openGame(page);
+  await expect(page.locator('#title')).toBeVisible();
+  await expect(page.locator('.logo')).toHaveText('Red Eye');
+  await shot(page, testInfo, 'title');
+  await page.locator('#goT').click();
+  expect(await page.evaluate(() => [__t.mode, __t.li])).toEqual(['play', 0]);
+});
+
 test('Rock Snake: hidden it just clangs, once it pops out it can be beaten', async ({ page }) => {
   await openGame(page);
   await page.locator('#goT').click();
