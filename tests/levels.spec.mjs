@@ -58,7 +58,12 @@ test.describe('the model itself', () => {
     });
     const run = o => analyseLevel(lvl(o), prof, GY);
     expect(run({}).completable, 'a 200px gap can be jumped').toBe(true);
-    const wide = run({ segs: [[-200, 1000], [1400, 5000]] });
+    const wide = run({
+      segs: [
+        [-200, 1000],
+        [1400, 5000],
+      ],
+    });
     expect(wide.completable, 'a 400px pit cannot').toBe(false);
     expect(wide.deadEnds).toEqual(['ground 1']);
     expect(run({ coins: [[800, 150]] }).items.missed.length, 'a coin 310px up').toBe(1);
@@ -77,7 +82,10 @@ test.describe('every level', () => {
       expect(B, `boss ${L.boss} exists`).toBeTruthy();
       expect(game.PALS[L.pal], `palette ${L.pal}`).toBeTruthy();
       expect(game.PALS[B.pal], `boss palette ${B.pal}`).toBeTruthy();
-      expect(L.segs.some(s => s[0] <= L.gate && s[1] >= L.gate + 40), 'the gate is on solid ground').toBe(true);
+      expect(
+        L.segs.some(s => s[0] <= L.gate && s[1] >= L.gate + 40),
+        'the gate is on solid ground',
+      ).toBe(true);
       if (i >= 10)
         for (let j = 0; j < L.segs.length - 1; j++) {
           const a = L.segs[j][1];
@@ -101,7 +109,10 @@ test.describe('every level', () => {
       expect(m.deadEnds, 'places you can get to but cannot get out of (except by falling)').toEqual([]);
       expect(m.unreachable, 'ground or logs you can never reach').toEqual([]);
       expect(missed, 'coins, pouches and hearts you can never collect').toEqual([]);
-      expect(m.lanterns.filter(l => !l.ok), 'checkpoints with nothing to stand on, or no way on').toEqual([]);
+      expect(
+        m.lanterns.filter(l => !l.ok),
+        'checkpoints with nothing to stand on, or no way on',
+      ).toEqual([]);
       expect(m.snakeProblems).toEqual([]);
     });
   }

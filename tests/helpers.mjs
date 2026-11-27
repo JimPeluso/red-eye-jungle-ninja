@@ -25,7 +25,8 @@ export async function shot(page, testInfo, name) {
 
 // WebKit won't read manifest.webmanifest over file:// ("Origin null is not allowed"). It only matters on the real
 // https site, where it works, so that one failure is ignored. Any other failed request (a font, a script) still fails.
-const fileQuirk = (url, text) => url.startsWith('file:') && /manifest\.webmanifest$/.test(url) && /Origin null/.test(text);
+const fileQuirk = (url, text) =>
+  url.startsWith('file:') && /manifest\.webmanifest$/.test(url) && /Origin null/.test(text);
 
 /** Every test fails if the page throws, logs an error, or a file it needs fails to load. */
 export const test = base.extend({

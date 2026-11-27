@@ -12,7 +12,5 @@ export function loadGameData() {
   const ctx = vm.createContext({ document: { getElementById: () => fakeCanvas } });
   for (const f of ['core', 'palettes', 'levels', 'bosses', 'scenery'])
     vm.runInContext(readFileSync(path.join(js, `${f}.js`), 'utf8'), ctx, { filename: `js/${f}.js` });
-  return JSON.parse(
-    vm.runInContext('JSON.stringify({ LEVELS, BOSSES, PALS, GY, WH, ARENA, arena: arena(0) })', ctx),
-  );
+  return JSON.parse(vm.runInContext('JSON.stringify({ LEVELS, BOSSES, PALS, GY, WH, ARENA, arena: arena(0) })', ctx));
 }

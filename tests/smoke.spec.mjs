@@ -9,10 +9,14 @@ test('no two game files declare the same top-level name (that would blank the ga
   const seen = {};
   const dupes = [];
   for (const f of readdirSync(path.join(root, 'js')).filter(f => f.endsWith('.js'))) {
-    const ast = espree.parse(readFileSync(path.join(root, 'js', f), 'utf8'), { ecmaVersion: 2022, sourceType: 'script' });
+    const ast = espree.parse(readFileSync(path.join(root, 'js', f), 'utf8'), {
+      ecmaVersion: 2022,
+      sourceType: 'script',
+    });
     const names = [];
     for (const n of ast.body) {
-      if (n.type === 'VariableDeclaration') n.declarations.forEach(d => d.id.type === 'Identifier' && names.push(d.id.name));
+      if (n.type === 'VariableDeclaration')
+        n.declarations.forEach(d => d.id.type === 'Identifier' && names.push(d.id.name));
       else if (n.id) names.push(n.id.name);
     }
     for (const name of names) {
@@ -56,10 +60,13 @@ test('bosses that burrow go underground, chase, burst up, lie dazed and can be h
   expect(burrowers.length).toBeGreaterThan(0);
   for (const [lvl, k] of burrowers) {
     const name = await page.evaluate(k => __t.BOSSES[k].name, k);
-    await page.evaluate(([lvl, k]) => {
-      __t.startLevel(lvl);
-      __t.startBoss(k);
-    }, [lvl, k]);
+    await page.evaluate(
+      ([lvl, k]) => {
+        __t.startLevel(lvl);
+        __t.startBoss(k);
+      },
+      [lvl, k],
+    );
     await tick(page, 132);
     await page.evaluate(() => {
       __t.respawnAt(250, 460);

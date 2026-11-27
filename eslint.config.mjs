@@ -24,13 +24,15 @@ function topLevelNames(file) {
   const add = (node, kind) => {
     if (!node) return;
     if (node.type === 'Identifier') out[node.name] = kind;
-    else if (node.type === 'ObjectPattern') node.properties.forEach(p => add(p.type === 'RestElement' ? p.argument : p.value, kind));
+    else if (node.type === 'ObjectPattern')
+      node.properties.forEach(p => add(p.type === 'RestElement' ? p.argument : p.value, kind));
     else if (node.type === 'ArrayPattern') node.elements.forEach(e => add(e, kind));
     else if (node.type === 'AssignmentPattern') add(node.left, kind);
     else if (node.type === 'RestElement') add(node.argument, kind);
   };
   for (const n of ast.body) {
-    if (n.type === 'VariableDeclaration') n.declarations.forEach(d => add(d.id, n.kind === 'const' ? 'readonly' : 'writable'));
+    if (n.type === 'VariableDeclaration')
+      n.declarations.forEach(d => add(d.id, n.kind === 'const' ? 'readonly' : 'writable'));
     else if ((n.type === 'FunctionDeclaration' || n.type === 'ClassDeclaration') && n.id) out[n.id.name] = 'writable';
   }
   return out;
