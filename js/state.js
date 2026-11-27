@@ -1,6 +1,7 @@
 /* Game state, small helpers, mkSnake(), starting levels and bosses, screens and level unlocks. */
 'use strict';
 /* ---------- state ---------- */
+let snakeIds = 0; // gives every snake an id (the Fire Snake's flames remember whose they are)
 let p = null,
   B = null,
   bolts = [],
@@ -65,6 +66,8 @@ const clampCam = v => {
   return Math.max(r[0], Math.min(r[1], v));
 };
 const rnd = (a, b) => a + Math.random() * (b - a);
+/* special snakes take 2 sword hits: the designer's rule is 10% more health than 2 hits */
+const TOUGH = [2, 3, 9, 10, 11, 12, 13, 14, 15];
 const mkSnake = ([x, a, b, y, sp, k0], i) => {
   const k = k0 >= 4 && k0 <= 6 ? [3, 2, 0][k0 - 4] : k0;
   return {
@@ -73,10 +76,21 @@ const mkSnake = ([x, a, b, y, sp, k0], i) => {
     b,
     y,
     sp,
-    type: k >= 7 && k <= 10 ? 0 : k || 0,
+    type: k >= 7 && k <= 15 ? 0 : k || 0,
     fly: k === 8,
     two: k === 9,
     rock: k === 10,
+    drop: k === 11,
+    spring: k === 12,
+    fire: k === 13,
+    shield: k === 14,
+    ghost: k === 15,
+    off: k === 11 ? DROP_HEIGHT : 0,
+    ns: 0,
+    nt: 0,
+    vx: 0,
+    ph: i * 53,
+    id: ++snakeIds,
     rk: 0,
     bite: 0,
     bdir: 1,
@@ -91,8 +105,8 @@ const mkSnake = ([x, a, b, y, sp, k0], i) => {
     alert: 0,
     dy: 0,
     vy: 0,
-    hp: k === 2 || k === 3 || k === 9 || k === 10 ? 2.2 : 1,
-    mhp: k === 2 || k === 3 || k === 9 || k === 10 ? 2.2 : 1,
+    hp: TOUGH.includes(k) ? 2.2 : 1,
+    mhp: TOUGH.includes(k) ? 2.2 : 1,
     inv: 0,
     cd: 40 + i * 17,
     spit: 0,

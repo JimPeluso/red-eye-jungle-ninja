@@ -161,7 +161,9 @@ function iceBall(v) {
   ctx.stroke();
 }
 function snake(s) {
-  const C = s.rock ? ROCKS : s.two ? TWO : s.fly ? FLY : s.ice ? ICE : SKIN[s.type === 1 ? 0 : s.type] || SKIN[0];
+  const C =
+    newSkin(s) ||
+    (s.rock ? ROCKS : s.two ? TWO : s.fly ? FLY : s.ice ? ICE : SKIN[s.type === 1 ? 0 : s.type] || SKIN[0]);
   if (s.fly && !s.dy) {
     ctx.fillStyle = 'rgba(0,0,0,.18)';
     ell(s.x, s.home + 1, Math.max(8, 24 - (s.home - s.y) * 0.08), 4);
@@ -182,6 +184,20 @@ function snake(s) {
     drawRock(s.x, s.y, 1, near && T % 110 < 70);
     ctx.restore();
     return;
+  }
+  if (s.drop && s.off > 0) {
+    drawHanging(s, C);
+    ctx.restore();
+    return;
+  }
+  if (s.spring) {
+    drawSpring(s, C);
+    ctx.restore();
+    return;
+  }
+  if (s.ghost) {
+    ctx.globalAlpha *= ghostAlpha(s);
+    ctx.translate(0, -s.off);
   }
   const d = s.dir,
     n = 10,
@@ -305,5 +321,6 @@ function snake(s) {
     ctx.fillStyle = '#ffe14d';
     ctx.fillText('!', hx, hy - 24);
   }
+  if (isNewSnake(s)) decorateNewSnake(s, hx, hy, d);
   ctx.restore();
 }

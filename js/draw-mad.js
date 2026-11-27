@@ -1,7 +1,9 @@
 /* Drawing the mad moves: ground spots (rustling leaves as the warning, then vines). */
 'use strict';
 function drawZones() {
-  for (const z of zones) if (z.kind === 'vines') drawVines(z);
+  for (const z of zones)
+    if (z.kind === 'vines') drawVines(z);
+    else if (z.kind === 'flame') drawFlame(z);
 }
 /* Moss's Vine Grab: a patch of leaves that rustles harder as the vines get closer, then four vines shoot up,
    sway, and sink back down. */

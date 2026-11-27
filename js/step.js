@@ -229,7 +229,7 @@ function step() {
       sfx.hiss();
     }
     moveSnake(s);
-    if (s.dy < 0) continue;
+    if (s.dy < 0 || ghostFaded(s)) continue;
     const b = ebox(s);
     if (s.rock && !s.rk) {
       if (s.inv <= 0 && swing && hit(blade, b)) {
@@ -247,13 +247,16 @@ function step() {
       continue;
     }
     if (swing && hit(blade, b)) {
-      hitEnemy(s, 2);
-      if (!s.alive) continue;
+      if (shieldFront(s, cx)) clangOff(s);
+      else {
+        hitEnemy(s, 2);
+        if (!s.alive) continue;
+      }
     }
     const st = stars.find(q => q.life > 0 && hit({ x: q.x - 8, y: q.y - 8, w: 16, h: 16 }, b));
     if (st) {
       st.life = 0;
-      if (s.type === 6 && s.atk > 0) {
+      if ((s.type === 6 && s.atk > 0) || (s.shield && Math.sign(st.vx) === -s.dir)) {
         pop(s.x, s.y - 92, 'Clang!', '#dfe6ea');
         sparkle(st.x, st.y);
         sfx.clang();
@@ -320,6 +323,7 @@ function step() {
     }
   }
   spits = spits.filter(v => v.life > 0);
+  stepZones(pb);
   if (boss && B) {
     if (B.cfg.duel) duelStep();
     else bossStep();
@@ -340,7 +344,6 @@ function step() {
       if (p.inv <= 0 && !p.dead && hit(pb, wb)) hurt(w);
     }
     waves = waves.filter(w => w.life > 0);
-    stepZones(pb);
     if (b.cfg.duel) {
       if (live) duelHits(swing, blade, pb, f0, cx);
     } else if (live) {

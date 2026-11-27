@@ -775,6 +775,25 @@ const LEVELS = [
 LEVELS.forEach((L, i) => {
   if (L.boss == null) L.boss = i;
 });
+/* The newer snakes (kinds 11-15, js/snake-kinds.js), added November 2026. All in one list so they're easy to move
+   or take out: [level number, sn entry]. Each one patrols a single long piece of ground (the level model checks). */
+const NEW_SNAKES = [
+  [5, [4050, 3940, 4160, GY, 1.6, 11]], // Drop Snake: Snake Caves
+  [11, [1741, 1741, 1851, GY, 1.6, 11]], // Drop Snake: Bamboo Forest
+  [17, [4243, 4133, 4250, GY, 1.6, 11]], // Drop Snake: Mushroom Forest
+  [4, [3760, 3760, 3870, GY, 1.6, 12]], // Spring Snake: Hidden Temple
+  [12, [3372, 3372, 3482, GY, 1.6, 12]], // Spring Snake: Desert Ruins
+  [14, [1637, 1637, 1747, GY, 1.6, 12]], // Spring Snake: Thunder Mountain
+  [7, [3780, 3670, 3780, GY, 1.6, 13]], // Fire Snake: Volcano
+  [20, [4244, 4134, 4250, GY, 1.6, 13]], // Fire Snake: Lava Lake
+  [6, [3480, 3370, 3480, GY, 1.1, 14]], // Shield Snake: Dark Fortress
+  [10, [1820, 1820, 1930, GY, 1.1, 14]], // Shield Snake: Snake King's Castle
+  [19, [1402, 1292, 1402, GY, 1.1, 14]], // Shield Snake: Golden Temple
+  [5, [1920, 1920, 2030, GY, 1.2, 15]], // Ghost Snake: Snake Caves
+  [13, [1370, 1260, 1379, GY, 1.2, 15]], // Ghost Snake: Crystal Caves
+  [18, [2287, 2177, 2287, GY, 1.2, 15]], // Ghost Snake: Midnight Jungle
+];
+for (const [n, sn] of NEW_SNAKES) LEVELS[n - 1].sn.push(sn);
 const arena = k => ({
   name: '',
   pal: BOSSES[k].pal,

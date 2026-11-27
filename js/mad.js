@@ -73,7 +73,7 @@ function stepZones(pb) {
   for (const z of zones) {
     z.t++;
     const up = z.t - z.warn;
-    if (up === 0) {
+    if (up === 0 && z.kind !== 'flame') {
       shake = Math.max(shake, 6);
       dust(z.x, GY, 10);
       sfx.whoosh();

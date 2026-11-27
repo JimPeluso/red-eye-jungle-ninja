@@ -9,7 +9,10 @@ function ebox(s) {
   }
   if (s.rock && !s.rk) return { x: s.x - 26, y: s.y - 30, w: 52, h: 30 };
   const r = s.type === 3 ? 24 * s.rear : 0;
-  return { x: s.x - 38 * GS, y: s.y - (26 + r) * GS, w: 76 * GS, h: (26 + r) * GS };
+  if (s.drop && s.off > 0) return { x: s.x - 13, y: s.y - s.off - 62, w: 26, h: 74 }; // hanging from its vine
+  if (s.spring) return { x: s.x - 22, y: s.y - s.off - 64, w: 44, h: 64 };
+  if (s.shield) return { x: s.x - 40, y: s.y - 36, w: 80, h: 36 };
+  return { x: s.x - 38 * GS, y: s.y - (26 + r) * GS - s.off, w: 76 * GS, h: (26 + r) * GS };
 }
 function moveSnake(s) {
   s.t++;
@@ -29,6 +32,10 @@ function moveSnake(s) {
     pc = p ? p.x + 17 : -1e9,
     dxp = pc - s.x,
     same = p && Math.abs(p.y + p.h - s.y) < 70;
+  if (isNewSnake(s)) {
+    moveNewSnake(s, play, dxp, same);
+    return;
+  }
   if (s.type === 2) {
     s.dir = dxp < 0 ? -1 : 1;
     if (!play) return;
@@ -246,22 +253,25 @@ function kill(s) {
   gain(8);
   puff(
     s.x,
-    s.y - (s.type >= 4 ? 30 : 12),
-    s.type >= 4
-      ? '#8a7aa8'
-      : s.type === 3
-        ? '#5aa8f0'
-        : s.type === 2
-          ? '#ffab55'
-          : s.rock
-            ? '#9aa09b'
-            : s.two
-              ? '#b84ad0'
-              : s.ice
-                ? '#bfefff'
-                : '#9fe34d',
+    s.y - (s.type >= 4 ? 30 : 12) - s.off,
+    newSnakeColor(s) ||
+      (s.type >= 4
+        ? '#8a7aa8'
+        : s.type === 3
+          ? '#5aa8f0'
+          : s.type === 2
+            ? '#ffab55'
+            : s.rock
+              ? '#9aa09b'
+              : s.two
+                ? '#b84ad0'
+                : s.ice
+                  ? '#bfefff'
+                  : '#9fe34d'),
     16,
   );
+  // a beaten Fire Snake's flames go out
+  if (s.fire) for (const z of zones) if (z.from === s.id) z.t = Math.max(z.t, z.warn + z.act - 6);
   sfx.pop();
   shake = Math.max(shake, 4);
   for (let i = 0; i < (s.type >= 4 ? 2 : 1); i++)

@@ -88,6 +88,8 @@ There's **no build step**.
 | `tests/smoke.spec.mjs` | Quick checks: the Rock Snake, every level and boss starts, level flow (Master Fang → Level 11, final boss → "You beat the game!"), no two files declare the same top-level name. |
 | `tests/levels.spec.mjs` | The **level model** (below), one test per level: the boss gate can be reached, no dead ends, every coin, pouch and heart can be collected, checkpoints are safe, no snake patrols over a pit, sign text fits, builder rules. |
 | `tests/playthrough.spec.mjs` | A **bot** plays the real game from the title to "You beat the game!" and beats every boss with real hits. It also checks the model against the engine: both say the widest jumpable gap is 244px. |
+| `tests/mad.spec.mjs` | Mad moves: Vine Grab only once mad and then every 3rd attack, the warning lasts at least 45 frames, standing still gets hit, stepping off dodges, the dazed boss can be hit. |
+| `tests/snakes.spec.mjs` | The newer snakes (11-15): each one's warning, attack and how it's beaten, that they're placed in the levels, and a "snake zoo" screenshot. |
 | `tests/save.spec.mjs` | Save and Continue: the checkpoint round trip, next level after a clear, leaving mid-boss, New game, beating the game clears the save, broken and tampered saves. |
 | `tests/ui.spec.mjs` | Every key; the iPad touch pads (no dead spots, sliding never sneaks, one-thumb sneak-walk, Sword-to-Jump roll and jump attack, touch timing help); the game controller (a pretend one); pause, saving, tampered saves, Game Over → Try again, the HUD, the boss-defeat regression, and security (no outside requests, no CSP violations, no test hook on the live site). |
 
@@ -139,12 +141,16 @@ Rules that follow from that:
 | `js/sound.js` | All sound effects (`sfx.*`), synthesised with Web Audio. There are no sound files. |
 | `js/enemies.js` | `ebox` (hit boxes), `moveSnake` (behaviour per kind), `hitEnemy`, `kill`, `gain` (super meter) |
 | `js/player.js` | Shadow Clones, Thunder Strike, `hurt`, `fallen`, `over`, `levelClear`, `champ` |
+| `js/mad.js` | Mad moves: `MAD` (each boss's extra attack once it's mad), `getMad`, `startMad`, the dazed state, and ground spots (`zones`: warn, then erupt; also the Fire Snake's flames) |
+| `js/snake-kinds.js` | The newer snakes, kinds 11-15: `moveNewSnake`, `shieldFront`, `ghostFaded`, `clangOff` |
 | `js/boss.js` | Giant cobra AI: `pickAttack`, `summon`, `bossHit`, `bossStep` state machine |
 | `js/duel.js` | Master Fang sword duel. **Not used** (he said "no duel"); kept switchable. |
 | `js/step.js` | `step()`, one game tick: input, physics, collisions, enemies, items, camera |
 | `js/draw-world.js` | Drawing helpers (`rr`, `circle`, `ell`), trees, ground, water/lava/clouds, logs, signs, lanterns, gate, coins, items |
 | `js/draw-enemies.js` | `snake()` and the special snakes (`drawRock`, `twoHead`, flying wings) |
 | `js/draw-ninjas.js` | `fig()` (any ninja), `ninja()` (Red Eye), `fang()`, plus dormant evil-ninja and duel drawing |
+| `js/draw-mad.js` | Drawing ground spots: Moss's rustling leaves and vines, the Fire Snake's flames |
+| `js/draw-snake-kinds.js` | Drawing the newer snakes: their colours (`NEW_SKIN`), the hanging Drop Snake, the coiling Spring Snake, flame crests, shields, ghost fading |
 | `js/draw-boss.js` | The giant cobra body and head, temple walls and torches |
 | `js/render.js` | Lightning bolts, health bars, shock waves, grass, then `world()` and `render()` |
 | `js/main.js` | `resize`, `hud`, the main loop, keyboard, touch and game-controller input, buttons, start-up, the `?test` hook |
@@ -222,12 +228,19 @@ How the generator works:
 | 8 | Flying snake | 1 | Hovers about 110px up and swoops down at Red Eye |
 | 9 | Two-headed snake | 2.2 | A head at each end that bites in both directions |
 | 10 | Rock Snake | 2.2 | Hides as a mossy boulder: sword and stars just go "Clang!". Pops out with a "!" when you get close, chases for about 2.5 seconds, then hides again. Hit it while it's out. |
+| 11 | Drop Snake | 2.2 | Hangs head-down from a vine 190px up. When Red Eye comes near it shakes for 30 frames ("!", leaves fall), drops, then races along. |
+| 12 | Spring Snake | 2.2 | Coils up for 24 frames ("boing"), then hops at Red Eye in an arc (about 90px up, 100px forward). Stomping works. |
+| 13 | Fire Snake | 2.2 | Leaves little flames behind it (ground spots, kind `flame`) that burn for 2 seconds and hurt. Beating it puts them out. |
+| 14 | Shield Snake | 2.2 | Sword and stars clang off its front. It takes 40 frames to turn round, so jump over it and hit its back. |
+| 15 | Ghost Snake | 2.2 | Fades out and back in (a 200-frame cycle). While faded it can't hurt Red Eye and can't be hit. |
 | 4, 5, 6 | (were evil ninjas) | | `mkSnake` turns them into kinds 3, 2 and 0. Level 6 still lists them. |
+
+Kinds 11-15 were added in November 2026 and are placed through the `NEW_SNAKES` list at the end of `js/levels.js` (level number + `sn` entry), so they're easy to move or take out without touching the levels themselves or the generator.
 
 Health 2.2 for the special kinds comes from his rule: "special snakes have 10% more health" than 2 sword hits. Basic snakes take one hit.
 
 **Adding a new snake kind:**
-1. In `mkSnake` (state.js), add a flag and its health.
+1. In `mkSnake` (state.js), add a flag and its health (special kinds go in `TOUGH`). New kinds' movement goes in `js/snake-kinds.js` and their drawing in `js/draw-snake-kinds.js`.
 2. Give it a hit box in `ebox` (enemies.js).
 3. Add its behaviour in `moveSnake`.
 4. Add any special hit rules in `step()` (step.js). The hidden Rock Snake skip is the example to copy.
@@ -285,6 +298,8 @@ The hood markings are a ring and a diamond. They once looked like a second pair 
 
 Boss fight mechanics:
 - Every boss has a **phase 2** below half health: faster, more snakes.
+- **Mad moves** (`js/mad.js`): a boss with a `mad` field gets mad at phase 2. A banner names the move ("Moss is mad! Vine Grab!"), the move comes straight away, then every 3rd attack. So far only **Moss: Vine Grab** (`mad: 'vines'`): leaves rustle on two patches, one under Red Eye, then vines shoot up. Ideas for the other bosses are in the `mad-moves` pull request.
+- **Fair-play rules for mad moves** (keep them): at least 45 frames (0.75 s) of warning; one clear way to dodge; 1 heart of damage; no flashing; afterwards the boss is **dazed** (head down near Red Eye) and can be hit. `tests/mad.spec.mjs` checks the warning, the dodge and the dazed hit.
 - The **lunge** counts as a hit with knockback. Its invisible "neck wall" only blocks near ground height and pushes gently (6px per frame). There used to be a bug where the wall dragged and pinned Red Eye during the lunge ("I freeze and get stuck"), so **don't bring back a hard wall**.
 
 ### Palettes (`js/palettes.js`)

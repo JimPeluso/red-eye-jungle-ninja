@@ -112,6 +112,7 @@ const sfx = {
   },
   whoosh: () => noise(0.3, 0.18, 900),
   rustle: () => noise(0.5, 0.1, 1500),
+  boing: () => tone(160, 0.3, 'sine', 0.07, 520),
   bossHit: () => {
     tone(520, 0.12, 'square', 0.06, 200);
     noise(0.12, 0.2, 1500);
