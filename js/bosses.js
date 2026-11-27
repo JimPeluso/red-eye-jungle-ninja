@@ -36,7 +36,7 @@ const BOSSES = [
     pal: 'temple',
     hp: 45,
     minion: 2,
-    atk: ['lunge', 'spit', 'slam', 'summon'],
+    atk: ['lunge', 'spit', 'slam', 'summon', 'burrow'],
     col: { o: '#5a1f08', a: '#e0621f', b: '#f27a2e', h: '#ff9d55', m: '#ffe08a', bl: '#ffe9b8' },
   },
   {
@@ -45,7 +45,7 @@ const BOSSES = [
     pal: 'cave',
     hp: 50,
     minion: 3,
-    atk: ['lunge', 'spit', 'slam', 'summon'],
+    atk: ['lunge', 'spit', 'slam', 'summon', 'burrow'],
     redEye: true,
     col: { o: '#0d0d18', a: '#3a3a52', b: '#4a4a66', h: '#5e5e80', m: '#ff3b30', bl: '#a0a0c0' },
   },

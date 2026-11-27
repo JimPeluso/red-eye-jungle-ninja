@@ -61,6 +61,52 @@ test('Rock Snake: hidden it just clangs, once it pops out it can be beaten', asy
   expect(await page.evaluate(() => __t.snakes[0].alive), 'beaten once it is out').toBe(false);
 });
 
+test('bosses that burrow go underground, chase, burst up, lie dazed and can be hit', async ({ page }, testInfo) => {
+  await openGame(page);
+  const burrowers = await page.evaluate(() =>
+    __t.LEVELS.map((L, i) => [i, L.boss]).filter(([, k]) => __t.BOSSES[k].atk.includes('burrow')),
+  );
+  expect(burrowers.length).toBeGreaterThan(0);
+  for (const [lvl, k] of burrowers) {
+    const name = await page.evaluate(k => __t.BOSSES[k].name, k);
+    await page.evaluate(
+      ([lvl, k]) => {
+        __t.startLevel(lvl);
+        __t.startBoss(k);
+      },
+      [lvl, k],
+    );
+    await tick(page, 132);
+    await page.evaluate(() => {
+      __t.respawnAt(250, 460);
+      __t.p.inv = 9999;
+      Object.assign(__t.B, { st: 'idle', t: 1, count: 1 });
+    });
+    const seen = new Set();
+    for (let i = 0; i < 300; i++) {
+      await tick(page, 2);
+      const st = await page.evaluate(() => __t.B.st);
+      seen.add(st);
+      if (st === 'under' && !seen.has('shot')) {
+        seen.add('shot');
+        await shot(page, testInfo, `burrow-${name.toLowerCase()}`);
+      }
+      if (st === 'dazed') break;
+    }
+    expect(
+      ['dive', 'under', 'rumble', 'burst', 'dazed'].every(s => seen.has(s)),
+      `${name} (Level ${lvl + 1}) goes underground, chases, bursts up and lies dazed`,
+    ).toBe(true);
+    const hp = await page.evaluate(() => __t.B.hp);
+    await page.evaluate(() => {
+      __t.p.x = __t.B.hx - 80;
+      __t.p.face = 1;
+    });
+    for (let n = 0; n < 3; n++) await tapKey(page, 'KeyZ', 15);
+    expect(await page.evaluate(h => __t.B.hp < h, hp), `${name} can be hit while dazed`).toBe(true);
+  }
+});
+
 test('every level starts and plays', async ({ page }, testInfo) => {
   test.setTimeout(5 * 60_000); // 20+ screenshots; WebKit at iPad resolution is slow
   await openGame(page);

@@ -93,7 +93,8 @@ function world() {
   for (const s of SEGS) if (s[1] > v0 && s[0] < v1) ground(s, Math.max(s[0], v0), Math.min(s[1], v1));
   if (boss && B) {
     templeBack();
-    if (!B.cfg.duel) cobraBody();
+    if (B.ug) burrowBack();
+    if (!B.cfg.duel) underground(B.ug && B.hole != null ? burrowNeck : cobraBody);
     templeFront();
   }
   for (const q of PLATS) {
@@ -123,7 +124,8 @@ function world() {
       if (B.cfg.rider) fang();
     } else {
       if (B.cfg.rider) fang();
-      cobraHead();
+      underground(cobraHead);
+      if (B.ug) burrowFront();
     }
   }
   if (PAL.dark) {

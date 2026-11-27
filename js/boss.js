@@ -12,6 +12,16 @@ function pickAttack() {
     startMad(b);
     return;
   }
+  if (A.includes('burrow') && (b.count === 2 || (b.count > 3 && r > 0.5 && r < 0.85))) {
+    b.st = 'dive';
+    b.t = 34;
+    b.ug = true;
+    b.sink = 0;
+    b.hole = null;
+    sfx.hiss();
+    pop(b.hx - 10, b.hy - 100, 'Into the ground!', '#d9c2ff');
+    return;
+  }
   if (A.includes('summon') && small < (b.phase === 2 ? 3 : 2) && r < 0.24 && b.count > 1) {
     b.st = 'summon';
     b.t = 46;
@@ -20,7 +30,7 @@ function pickAttack() {
     pop(b.hx + 6, b.hy - 150, b.cfg.rider ? 'Snakes, attack!' : 'Hisssss!', '#d9c2ff');
     return;
   }
-  const other = A.filter(a => a !== 'lunge' && a !== 'summon');
+  const other = A.filter(a => a !== 'lunge' && a !== 'summon' && a !== 'burrow');
   if (!other.length || r < 0.6 || b.count % 3 === 0) {
     b.st = 'windup';
     b.t = b.phase === 2 ? 32 : 46;
@@ -67,6 +77,9 @@ function bossHit(d) {
   if (b.hp <= 0) {
     b.st = 'defeat';
     b.t = 150;
+    b.ug = false;
+    b.hole = null;
+    b.sink = 0;
     b.fx = b.hx + 6;
     b.fy = b.hy - 40;
     b.fvy = -13;
@@ -256,6 +269,114 @@ function bossStep() {
         b.t = ph2 ? 45 : 70;
       }
       break;
+    /* burrow (Shadow): sink into the ground, chase Red Eye as a dirt mound, burst up under him, lie dazed (hit it!), then dive back home */
+    case 'dive': {
+      const k = 1 - b.t / 34;
+      b.hy = rest;
+      b.sink = k < 0.2 ? -k * 0.3 : Math.pow((k - 0.2) / 0.8, 2);
+      if (b.t === 24) {
+        dust(b.hx, GY, 18);
+        dust(b.hx + 150, GY, 12);
+        shake = 8;
+        sfx.whoosh();
+      }
+      if (--b.t <= 0) {
+        b.sink = 1;
+        b.st = 'under';
+        b.t = ph2 ? 70 : 95;
+        b.mx = b.hx - 30;
+        b.hy = GY + 150;
+      }
+      break;
+    }
+    case 'under': {
+      const tx = Math.max(60, Math.min(720, p.x + 17));
+      b.mx += Math.sign(tx - b.mx) * Math.min(Math.abs(tx - b.mx), ph2 ? 4.2 : 3.2);
+      if (b.tick % 5 === 0) dust(b.mx, GY, 3);
+      if (b.tick % 24 === 0) sfx.rumble();
+      shake = Math.max(shake, 2);
+      if (--b.t <= 0 || Math.abs(tx - b.mx) < 4) {
+        b.st = 'rumble';
+        b.t = ph2 ? 26 : 38;
+        pop(b.mx, GY - 70, '!', '#ffe14d');
+        sfx.hiss();
+      }
+      break;
+    }
+    case 'rumble':
+      shake = Math.max(shake, 4);
+      if (b.tick % 4 === 0) dust(b.mx + rnd(-30, 30), GY, 2);
+      if (--b.t <= 0) {
+        b.st = 'burst';
+        b.t = 22;
+        b.hole = b.mx;
+        b.hx = b.mx;
+        b.hy = GY + 90;
+        shake = 16;
+        dust(b.mx, GY, 26);
+        for (let i = 0; i < 12; i++)
+          parts.push({
+            x: b.mx + rnd(-30, 30),
+            y: GY - 4,
+            vx: rnd(-4, 4),
+            vy: rnd(-10, -4),
+            g: 0.4,
+            life: 40,
+            max: 40,
+            r: rnd(3, 6),
+            c: PAL.dirt[i % 3],
+          });
+        sfx.roar();
+        sfx.thud();
+      }
+      break;
+    case 'burst':
+      if (b.t > 10) b.hy += (GY - 175 - b.hy) * 0.45;
+      else b.hy += (GY - 34 - b.hy) * 0.35;
+      if (
+        b.t > 8 &&
+        p.inv <= 0 &&
+        !p.dead &&
+        hit({ x: p.x, y: p.y, w: p.w, h: p.h }, { x: b.hole - 44, y: b.hy - 50, w: 88, h: GY - b.hy + 50 })
+      )
+        hurt({ x: b.hole });
+      if (--b.t <= 0) {
+        b.st = 'dazed';
+        b.t = ph2 ? 75 : 100;
+        b.dazeTo = b.hx; // stays by its hole
+        b.hy = GY - 34;
+        shake = 10;
+        dust(b.hx - 20, GY, 12);
+        sfx.thud();
+      }
+      break;
+    case 'redive':
+      b.hy += (GY + 120 - b.hy) * 0.18;
+      if (b.t === 20) dust(b.hole, GY, 14);
+      if (--b.t <= 0) {
+        b.hole = null;
+        b.hx = Math.max(460, Math.min(700, p.x + 17 + 300));
+        b.hy = rest;
+        b.sink = 1;
+        b.st = 'rise';
+        b.t = 40;
+        dust(b.hx, GY, 16);
+        dust(b.hx + 160, GY, 12);
+        sfx.whoosh();
+      }
+      break;
+    case 'rise': {
+      const k = 1 - b.t / 40;
+      b.hy = rest;
+      b.sink = (1 - k) * (1 - k);
+      if (--b.t <= 0) {
+        b.sink = 0;
+        b.ug = false;
+        b.st = 'idle';
+        b.t = ph2 ? 45 : 70;
+      }
+      break;
+    }
     case 'defeat':
       b.hx += (1000 - b.hx) * 0.03;
       b.hy += (GY - 70 - b.hy) * 0.05;

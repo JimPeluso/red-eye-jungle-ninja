@@ -3,3 +3,6 @@
 
 # Format all code with Prettier (no behaviour change)
 fa00ba37760441e85a7d4d2ed7fd7488dd3e0155
+
+# Format all code with Prettier, on shadow-burrow
+0f0ad4652a129c24163b8e7b3f203fdebadcab35

@@ -51,11 +51,16 @@ function madStep(b, rest) {
     shake = Math.max(shake, 8);
   }
 }
-/** Dazed: head down on the ground, can be hit (step.js treats it like 'stuck'), then back up. */
+/** Dazed: head down on the ground, can be hit (step.js treats it like 'stuck'), then back up. Used after a mad move
+    and after the burrow's burst (then it dives back down its hole). */
 function dazedStep(b) {
   b.hx += (b.dazeTo - b.hx) * 0.12;
   b.hy += (GY - 34 - b.hy) * 0.25;
-  if (--b.t <= 0) {
+  if (--b.t > 0) return;
+  if (b.hole != null) {
+    b.st = 'redive';
+    b.t = 26;
+  } else {
     b.st = 'recover';
     b.t = 40;
     b.to = Math.min(700, b.hx + 260);

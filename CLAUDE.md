@@ -85,7 +85,7 @@ There's **no build step**.
 
 | Test file | What it checks |
 |---|---|
-| `tests/smoke.spec.mjs` | Quick checks: the Rock Snake, every level and boss starts, level flow (Master Fang → Level 11, final boss → "You beat the game!"), no two files declare the same top-level name. |
+| `tests/smoke.spec.mjs` | Quick checks: the Rock Snake, the burrowing bosses (Ember, Shadow) go underground, burst up and can be hit while dazed, every level and boss starts, level flow (Master Fang → Level 11, final boss → "You beat the game!"), no two files declare the same top-level name. |
 | `tests/levels.spec.mjs` | The **level model** (below), one test per level: the boss gate can be reached, no dead ends, every coin, pouch and heart can be collected, checkpoints are safe, no snake patrols over a pit, sign text fits, builder rules. |
 | `tests/playthrough.spec.mjs` | A **bot** plays the real game from the title to "You beat the game!" and beats every boss with real hits. It also checks the model against the engine: both say the widest jumpable gap is 244px. |
 | `tests/mad.spec.mjs` | Mad moves: Vine Grab only once mad and then every 3rd attack, the warning lasts at least 45 frames, standing still gets hit, stepping off dodges, the dazed boss can be hit. |
@@ -256,7 +256,7 @@ Health 2.2 for the special kinds comes from his rule: "special snakes have 10% m
 
 | Field | Meaning |
 |---|---|
-| `atk` | Any of `'lunge'`, `'slam'`, `'spit'`, `'wave'` (ground shock wave), `'spikes'` (shoots spikes), `'summon'` (calls snakes) |
+| `atk` | Any of `'lunge'`, `'slam'`, `'spit'`, `'wave'` (ground shock wave), `'spikes'` (shoots spikes), `'summon'` (calls snakes), `'burrow'` (goes underground; see below) |
 | `minion` | Snake kind it summons (0–3) |
 | `col` | Colours: `o` outline, `a`/`b` body, `h` highlight, `m` hood markings, `bl` belly |
 | `rider` | Master Fang sits on its head (his own hit box, and he shouts "Snakes, attack!") |
@@ -273,8 +273,8 @@ The hood markings are a ring and a diamond. They once looked like a second pair 
 | 0 | Moss | 1 | 30 |
 | 1 | Thunder | 2 | 35 |
 | 2 | Tide | 3 | 40 |
-| 3 | Ember | 4 | 45 |
-| 4 | Shadow | 5 | 50 |
+| 3 | Ember (also **burrows**) | 4 | 45 |
+| 4 | Shadow (the one that **burrows**) | 5 | 50 |
 | 11 | Venom | 6 | 60 |
 | 8 | Magma | 7 | 55 |
 | 9 | Bog | 8 | 60 |
@@ -300,6 +300,15 @@ Boss fight mechanics:
 - Every boss has a **phase 2** below half health: faster, more snakes.
 - **Mad moves** (`js/mad.js`): a boss with a `mad` field gets mad at phase 2. A banner names the move ("Moss is mad! Vine Grab!"), the move comes straight away, then every 3rd attack. So far only **Moss: Vine Grab** (`mad: 'vines'`): leaves rustle on two patches, one under Red Eye, then vines shoot up. Ideas for the other bosses are in the `mad-moves` pull request.
 - **Fair-play rules for mad moves** (keep them): at least 45 frames (0.75 s) of warning; one clear way to dodge; 1 heart of damage; no flashing; afterwards the boss is **dazed** (head down near Red Eye) and can be hit. `tests/mad.spec.mjs` checks the warning, the dodge and the dazed hit.
+- **Burrow** (Ember on Level 4 and Shadow on Level 5; his idea: "cave snake can go underground", then "a snake on Level 4 too"). The sequence:
+  1. `dive`: the cobra sinks into the ground.
+  2. `under`: a dirt mound, with the cobra's back poking out, chases Red Eye.
+  3. `rumble`: it stops under him with a "!" and red eyes in the crack. That's the warning to move.
+  4. `burst`: the head erupts out of a hole and hurts him if he's standing on it.
+  5. `dazed`: the head lies on the ground with stars, and **can be hit** like `stuck`.
+  6. `redive` and `rise`: it sinks back and comes up at its usual spot.
+
+  State lives on `B`: `ug` (underground), `sink` (0 to 1), `mx` (mound x), `hole` (x of the hole). The drawing is `underground()`, `burrowBack()`, `burrowNeck()` and `burrowFront()` in draw-boss.js, which clip the cobra at ground level. While `B.ug` is true there's no neck wall, only a soft wall at x=760. It's always picked as the second attack (so you see it early), then about 35% of the time. To give another boss the attack, add `'burrow'` to its `atk`.
 - The **lunge** counts as a hit with knockback. Its invisible "neck wall" only blocks near ground height and pushes gently (6px per frame). There used to be a bug where the wall dragged and pinned Red Eye during the lunge ("I freeze and get stuck"), so **don't bring back a hard wall**.
 
 ### Palettes (`js/palettes.js`)
@@ -392,6 +401,7 @@ If you change hearts, update `newPlayer()`, `retry()` and the "of 6" text in `ch
 - **23 levels**, each with its own world and giant cobra boss. They get harder as you go: tougher bosses, faster and more numerous snakes, wider gaps that always have something to land on.
 - **Level 10: Master Fang riding his giant spiked cobra.** It's a boss battle, not the final boss, and there's no sword duel and no throwing stars for Master Fang. He was made easier once already.
 - **Level 23: the Spike King** is the final boss. He has spikes and shoots spikes.
+- **Levels 4 and 5: Ember and Shadow go underground** and burst up under Red Eye.
 - **Snakes are normal size** (`GS=1`). Giant snakes were tried and reverted.
 - **Cartoon art.** "Realistic" art was tried and fully reverted.
 - **No evil ninjas, no ice snakes or ice balls.** Removed by request; the code is dormant.

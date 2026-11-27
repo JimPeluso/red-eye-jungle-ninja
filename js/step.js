@@ -94,7 +94,13 @@ function step() {
     /* the cobra's neck blocks the way, but only near the ground; a lunge that catches you is a hit, not a bulldozer */
     let wall = ARENA - 20,
       soft = false;
-    if (B && !B.cfg.duel && B.st !== 'defeat' && p.y + p.h > B.hy - 40) {
+    if (B && B.ug) {
+      if (760 < wall) {
+        wall = 760;
+        soft = true;
+      }
+    } /* burrowing: no neck to block, just keep Red Eye out of the far corner */
+    else if (B && !B.cfg.duel && B.st !== 'defeat' && p.y + p.h > B.hy - 40) {
       const w = B.hx + 62;
       if (B.st === 'lunge' && p.x + p.w > w && p.inv <= 0 && !p.dead) {
         hurt({ x: p.x + 40 });
