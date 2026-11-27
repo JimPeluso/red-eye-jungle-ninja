@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Red Eye Jungle Ninja</title>
+<meta name="description" content="Red Eye the jungle ninja: a side-scrolling platformer with 23 levels, giant cobras, Master Fang and the Spike King.">
+<meta name="theme-color" content="#0b2e22">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Red Eye">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="game">
+<canvas id="c" aria-label="Red Eye game screen"></canvas>
+
+<div class="hud">
+ <div class="hearts" id="hearts">
+  <svg viewBox="0 0 26 24"><path d="M13 22C6 16.5 1.5 12.6 1.5 7.8 1.5 4.4 4.1 2 7.2 2c2.4 0 4.4 1.4 5.8 3.4C14.4 3.4 16.4 2 18.8 2c3.1 0 5.7 2.4 5.7 5.8 0 4.8-4.5 8.7-11.5 14.2Z"/></svg>
+  <svg viewBox="0 0 26 24"><path d="M13 22C6 16.5 1.5 12.6 1.5 7.8 1.5 4.4 4.1 2 7.2 2c2.4 0 4.4 1.4 5.8 3.4C14.4 3.4 16.4 2 18.8 2c3.1 0 5.7 2.4 5.7 5.8 0 4.8-4.5 8.7-11.5 14.2Z"/></svg>
+  <svg viewBox="0 0 26 24"><path d="M13 22C6 16.5 1.5 12.6 1.5 7.8 1.5 4.4 4.1 2 7.2 2c2.4 0 4.4 1.4 5.8 3.4C14.4 3.4 16.4 2 18.8 2c3.1 0 5.7 2.4 5.7 5.8 0 4.8-4.5 8.7-11.5 14.2Z"/></svg>
+  <svg viewBox="0 0 26 24"><path d="M13 22C6 16.5 1.5 12.6 1.5 7.8 1.5 4.4 4.1 2 7.2 2c2.4 0 4.4 1.4 5.8 3.4C14.4 3.4 16.4 2 18.8 2c3.1 0 5.7 2.4 5.7 5.8 0 4.8-4.5 8.7-11.5 14.2Z"/></svg>
+  <svg viewBox="0 0 26 24"><path d="M13 22C6 16.5 1.5 12.6 1.5 7.8 1.5 4.4 4.1 2 7.2 2c2.4 0 4.4 1.4 5.8 3.4C14.4 3.4 16.4 2 18.8 2c3.1 0 5.7 2.4 5.7 5.8 0 4.8-4.5 8.7-11.5 14.2Z"/></svg>
+  <svg viewBox="0 0 26 24"><path d="M13 22C6 16.5 1.5 12.6 1.5 7.8 1.5 4.4 4.1 2 7.2 2c2.4 0 4.4 1.4 5.8 3.4C14.4 3.4 16.4 2 18.8 2c3.1 0 5.7 2.4 5.7 5.8 0 4.8-4.5 8.7-11.5 14.2Z"/></svg>
+ </div>
+ <div class="stat"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10.5" fill="#d98a0b"/><circle cx="12" cy="12" r="8" fill="#ffc928"/><rect x="9.2" y="9.2" width="5.6" height="5.6" fill="#a8650a"/></svg><span id="hc">0</span></div>
+ <div class="stat"><svg viewBox="-12 -12 24 24"><path d="M10.5 0 2.5 2.5 0 10.5-2.5 2.5-10.5 0-2.5-2.5 0-10.5 2.5-2.5Z" fill="#dfe6ea" stroke="#4b5860" stroke-width="1.5" stroke-linejoin="round"/><circle r="1.6" fill="#4b5860"/></svg><span id="ha">5</span></div>
+ <div class="sup" id="sup"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="#fff59d" stroke="#14110f" stroke-width="1.5" stroke-linejoin="round"/></svg><i><b id="supfill"></b></i></div>
+ <span class="lvtag" id="lvtag">1</span>
+</div>
+<div class="bossbar"><span id="bossName">Master Fang</span><div class="bar"><i id="bossfill"></i></div></div>
+<div class="banner" id="banner" hidden><small id="bnS"></small><b id="bnB"></b><small id="bnU"></small></div>
+
+<div class="pad l" id="padL">
+ <button class="b" data-k="L" aria-label="Run left"><svg viewBox="0 0 24 24"><path d="M15 4 7 12l8 8" stroke="currentColor" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+ <button class="b small lab" data-k="D" aria-label="Sneak"><svg viewBox="0 0 24 24"><path d="m5 8 7 8 7-8" stroke="currentColor" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Sneak</span></button>
+ <button class="b" data-k="R" aria-label="Run right"><svg viewBox="0 0 24 24"><path d="m9 4 8 8-8 8" stroke="currentColor" stroke-width="3.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+</div>
+<div class="pad r" id="padR">
+ <button class="b small lab" id="bV" data-k="V"><svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="4" fill="currentColor" opacity=".55"/><circle cx="16" cy="8" r="4" fill="currentColor"/><path d="M2 21c0-4 3-7 6-7s6 3 6 7Z" fill="currentColor" opacity=".55"/><path d="M10 21c0-4 3-7 6-7s6 3 6 7Z" fill="currentColor"/></svg><span>Clones</span></button>
+ <button class="b small lab" id="bU" data-k="U"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h6l-1 8 9-12h-6l1-8Z" fill="currentColor"/></svg><span>Super</span></button>
+ <button class="b small lab" id="bT" data-k="T"><svg viewBox="-12 -12 24 24"><path d="M10.5 0 2.5 2.5 0 10.5-2.5 2.5-10.5 0-2.5-2.5 0-10.5 2.5-2.5Z" fill="currentColor"/></svg><span>Star</span></button>
+ <button class="b lab" id="bS" data-k="S"><svg viewBox="0 0 24 24"><path d="M6 18 20 4" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><path d="m4.5 13.5 6 6M3 21l3-3" stroke="#ffc928" stroke-width="3" stroke-linecap="round"/></svg><span>Sword</span></button>
+ <button class="b big lab" id="bJ" data-k="J"><svg viewBox="0 0 24 24"><path d="m4 15 8-8 8 8" stroke="currentColor" stroke-width="3.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Jump</span></button>
+</div>
+
+<div class="screen" id="title">
+ <div>
+  <h1 class="logo">Red Eye</h1>
+  <p class="sub">Jungle Ninja</p>
+  <p class="lvl">23 levels, Master Fang and the Spike King</p>
+  <div><button class="go" id="goT">Play</button></div>
+  <p class="chiplab">Pick a level you have unlocked</p>
+  <div class="chips" id="chips"><button class="chip" data-i="0">1</button><button class="chip" data-i="1">2</button><button class="chip" data-i="2">3</button><button class="chip" data-i="3">4</button><button class="chip" data-i="4">5</button><button class="chip" data-i="5">6</button><button class="chip" data-i="6">7</button><button class="chip" data-i="7">8</button><button class="chip" data-i="8">9</button><button class="chip" data-i="9">10</button><button class="chip" data-i="10">11</button><button class="chip" data-i="11">12</button><button class="chip" data-i="12">13</button><button class="chip" data-i="13">14</button><button class="chip" data-i="14">15</button><button class="chip" data-i="15">16</button><button class="chip" data-i="16">17</button><button class="chip" data-i="17">18</button><button class="chip" data-i="18">19</button><button class="chip" data-i="19">20</button><button class="chip" data-i="20">21</button><button class="chip" data-i="21">22</button><button class="chip" data-i="22">23</button></div>
+  <p class="keys"><span><kbd>&larr;</kbd> <kbd>&rarr;</kbd> run</span><span><kbd>Space</kbd> jump</span><span><kbd>Z</kbd> sword</span><span><kbd>X</kbd> throwing star</span><span><kbd>&darr;</kbd> sneak</span><span><kbd>C</kbd> thunder</span><span><kbd>V</kbd> clones</span></p>
+  <p class="turn">Turn the iPad sideways for the best view</p>
+ </div>
+</div>
+<div class="screen scrim" id="over" hidden><div class="card"><h2>Ouch!</h2><p id="overMsg"></p><button class="go" id="goO">Try again</button></div></div>
+<div class="screen scrim" id="win" hidden><div class="card"><h2 id="wH">Level clear!</h2><p id="wP"></p><div class="stats"><span>Coins</span><b id="wC">0</b><span>Enemies defeated</span><b id="wK">0</b><span>Sneak attacks</span><b id="wS">0</b><span>Level time</span><b id="wT">0:00</b></div><button class="go" id="goW">Next level</button><div><button class="link" id="goW2">Play this level again</button></div></div></div>
+<div class="screen scrim" id="champ" hidden><div class="card boss"><h2>You beat the game!</h2><p>Red Eye beat Master Fang and every giant cobra, then took down the Spike King. The jungle is safe, and Red Eye is the champion.</p><div class="stats"><span>Coins</span><b id="cC">0</b><span>Hearts left</span><b id="cH">3</b><span>Total time</span><b id="cT">0:00</b></div><button class="go" id="goC">Back to the start</button><p class="note">Play again and try to beat your coin total.</p></div></div>
+<div class="screen scrim" id="paused" hidden><div class="card"><h2>Paused</h2><p>Coins so far: <b id="pC">0</b></p><button class="go" id="goP">Keep playing</button><div><button class="link" id="goQ">Quit to title</button></div></div></div>
+
+<div class="top">
+ <button class="round" id="snd" aria-label="Sound on or off"><svg id="sOn" viewBox="0 0 24 24"><path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg><svg id="sOff" hidden viewBox="0 0 24 24"><path d="M3 9h4l5-4v14l-5-4H3z" fill="currentColor"/><path d="m15.5 9 6 6m0-6-6 6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>
+ <button class="round" id="pz" aria-label="Pause"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4.2" height="14" rx="1.2" fill="currentColor"/><rect x="13.8" y="5" width="4.2" height="14" rx="1.2" fill="currentColor"/></svg></button>
+</div>
+</div>
+
+<!-- Game code: plain scripts that share one global scope, loaded in this order. No build step. -->
+<script src="js/core.js"></script>
+<script src="js/palettes.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/bosses.js"></script>
+<script src="js/scenery.js"></script>
+<script src="js/state.js"></script>
+<script src="js/effects.js"></script>
+<script src="js/sound.js"></script>
+<script src="js/enemies.js"></script>
+<script src="js/player.js"></script>
+<script src="js/boss.js"></script>
+<script src="js/duel.js"></script>
+<script src="js/step.js"></script>
+<script src="js/draw-world.js"></script>
+<script src="js/draw-enemies.js"></script>
+<script src="js/draw-ninjas.js"></script>
+<script src="js/draw-boss.js"></script>
+<script src="js/render.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
