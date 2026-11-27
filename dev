@@ -1,0 +1,20 @@
+#!/bin/sh
+# Runs a command inside the Node dev container (compose.yaml), so Node never has to be installed on the Mac.
+#   ./dev npm run setup    once: installs packages and the test browsers into Docker volumes
+#   ./dev npm test         every test (Chromium + WebKit)
+#   ./dev npm run lint     ESLint     ./dev npm run format   Prettier
+#   ./dev npm run serve    play at http://localhost:8000 (iPad: http://<laptop-ip>:8000)
+#   ./dev                  a shell inside the container
+set -e
+cd "$(dirname "$0")"
+if ! docker info >/dev/null 2>&1; then
+  echo "Docker isn't running. Start Docker Desktop (open -a Docker) and try again." >&2
+  exit 1
+fi
+[ "$#" -eq 0 ] && set -- bash
+tty=""
+[ -t 0 ] || tty="-T"
+case " $* " in
+  *" serve "*) exec docker compose run --rm $tty --service-ports dev "$@" ;;
+  *) exec docker compose run --rm $tty dev "$@" ;;
+esac

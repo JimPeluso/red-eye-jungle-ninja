@@ -54,6 +54,6 @@ function start(d){if(!restore(d))toTitle();if(!running){running=true;requestAnim
 load(L1);resize();
 const ro=new ResizeObserver(resize);ro.observe(cv);
 /* test hook: only exists when the page is opened with ?test (used by tests/smoke.mjs) */
-if(/[?&]test\b/.test(location.search))window.__t={get p(){return p},get snakes(){return snakes},get B(){return B},get mode(){return mode},get li(){return li},LEVELS,BOSSES,PALS,mkSnake,startLevel,startBoss,respawnAt,bossHit,unlocked};
+if(/[?&]test\b/.test(location.search))window.__t={get p(){return p},get snakes(){return snakes},get B(){return B},get mode(){return mode},get li(){return li},get LT(){return LT},get spits(){return spits},get waves(){return waves},key,tch,LEVELS,BOSSES,PALS,mkSnake,startLevel,startBoss,respawnAt,bossHit,unlocked,step,draw(){render();hud()}};
 try{window.claude?.hot?.snapshot?.(snap)}catch(e){}
 window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});

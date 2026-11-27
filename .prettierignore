@@ -1,0 +1,9 @@
+# Hand-written docs keep their own layout.
+*.md
+package-lock.json
+fonts/
+icons/
+tests/shots/
+test-results/
+playwright-report/
+_site/
