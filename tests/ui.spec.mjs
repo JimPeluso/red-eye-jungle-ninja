@@ -163,6 +163,226 @@ test.describe('touch buttons (iPad)', () => {
     expect(await mode(page)).toBe('paused');
     expect(await page.evaluate(() => Object.values(__t.tch).some(Boolean)), 'no button still held').toBe(false);
   });
+
+  // A finger at an exact screen spot (x, y) on a pad: down, move or up.
+  const touchAt = (page, pad, type, x, y, id = 1) =>
+    page.locator(pad).dispatchEvent(`pointer${type}`, { pointerId: id, pointerType: 'touch', clientX: x, clientY: y });
+  const centreOf = async (page, selector) => {
+    const b = await page.locator(selector).boundingBox();
+    return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+  };
+
+  test('sliding a thumb along the arrows never sneaks, and one thumb can sneak-walk', async ({ page }) => {
+    await start(page);
+    const L = await centreOf(page, '#padL [data-k=L]');
+    const R = await centreOf(page, '#padL [data-k=R]');
+    const D = await centreOf(page, '#padL [data-k=D]');
+    await touchAt(page, '#padL', 'down', L.x, L.y);
+    for (let i = 0; i <= 20; i++) {
+      await touchAt(page, '#padL', 'move', L.x + ((R.x - L.x) * i) / 20, L.y);
+      expect(await page.evaluate(() => __t.tch.D), `no sneaking at step ${i} of the slide`).toBe(0);
+    }
+    expect(await page.evaluate(() => __t.tch.R)).toBe(1);
+    await touchAt(page, '#padL', 'up', R.x, R.y);
+    // thumb between Sneak and Right, in the tall grass of Level 1: crouched, moving right, hidden
+    await page.evaluate(() => __t.respawnAt(1650, 460));
+    await tick(page, 3);
+    const x0 = (await p(page)).x;
+    await touchAt(page, '#padL', 'down', R.x, D.y);
+    await tick(page, 30);
+    const after = await p(page);
+    expect([after.crouch, after.hidden, after.x > x0 + 30]).toEqual([true, true, true]);
+    await touchAt(page, '#padL', 'up', R.x, D.y);
+  });
+
+  test('every spot in the right-hand area presses a button (no dead spots)', async ({ page }) => {
+    await start(page);
+    // The same pointer events a finger sends, every 8px across the pad, sent from inside the page in one go.
+    const dead = await page.evaluate(() => {
+      const pad = document.getElementById('padR');
+      const box = pad.getBoundingClientRect();
+      const send = (type, x, y) =>
+        pad.dispatchEvent(
+          new PointerEvent(`pointer${type}`, {
+            pointerId: 9,
+            pointerType: 'touch',
+            clientX: x,
+            clientY: y,
+            bubbles: true,
+          }),
+        );
+      const out = [];
+      for (let x = box.left + 2; x < box.right; x += 8)
+        for (let y = box.top + 2; y < box.bottom; y += 8) {
+          send('down', x, y);
+          if (!'JSTUV'.split('').some(k => __t.tch[k])) out.push(`${x | 0},${y | 0}`);
+          send('up', x, y);
+        }
+      return out;
+    });
+    expect(dead).toEqual([]);
+  });
+
+  test('rolling a thumb from Sword onto Jump jumps, and between them does both', async ({ page }) => {
+    await start(page);
+    const S = await centreOf(page, '#bS');
+    const J = await centreOf(page, '#bJ');
+    await touchAt(page, '#padR', 'down', S.x, S.y);
+    await tick(page, 1);
+    for (let i = 1; i <= 6; i++) await touchAt(page, '#padR', 'move', S.x + ((J.x - S.x) * i) / 6, S.y);
+    await tick(page, 3);
+    expect((await p(page)).vy, 'jumping after the roll').toBeLessThan(0);
+    await touchAt(page, '#padR', 'up', J.x, J.y);
+    await tick(page, 60);
+    await touchAt(page, '#padR', 'down', (S.x + J.x) / 2, (S.y + J.y) / 2);
+    await tick(page, 3);
+    const both = await p(page);
+    expect([both.sw > 0, both.vy < 0], 'sword swing and jump together').toEqual([true, true]);
+    await touchAt(page, '#padR', 'up', J.x, J.y);
+  });
+
+  test('on touch, a jump pressed a little late after running off an edge still works (not on the keyboard)', async ({
+    page,
+  }) => {
+    await start(page);
+    // Level 1's first gap starts at x=900. Run off it, wait 8 frames, then press Jump.
+    const lateJump = async touch => {
+      await page.evaluate(() => {
+        __t.respawnAt(700, 460);
+        __t.p.inv = 1e6;
+      });
+      await tick(page, 3);
+      if (touch) await finger(page, '#padL [data-k=R]', 'down');
+      else await page.keyboard.down('ArrowRight');
+      await page.evaluate(() => {
+        for (let i = 0; i < 300 && __t.p.on; i++) __t.step();
+      });
+      await tick(page, 7);
+      if (touch) await finger(page, '#bJ', 'down', 2);
+      else await page.keyboard.down('Space');
+      await tick(page, 2);
+      const jumped = (await p(page)).vy < 0;
+      if (touch) {
+        await finger(page, '#bJ', 'up', 2);
+        await finger(page, '#padL [data-k=R]', 'up');
+      } else {
+        await page.keyboard.up('Space');
+        await page.keyboard.up('ArrowRight');
+      }
+      return jumped;
+    };
+    expect(await lateJump(true), 'touch').toBe(true);
+    expect(await lateJump(false), 'keyboard keeps its tighter timing').toBe(false);
+  });
+
+  test('touch buttons only show while playing, and stay clear of the bottom edge', async ({ page }) => {
+    await openGame(page);
+    await page.touchscreen.tap(8, 760);
+    await expect(page.locator('#padL')).toBeHidden();
+    await page.evaluate(() => __t.startLevel(0));
+    await expect(page.locator('#padL')).toBeVisible();
+    const lowest = await page.evaluate(() =>
+      Math.max(...[...document.querySelectorAll('.pad .b')].map(b => b.getBoundingClientRect().bottom)),
+    );
+    expect(page.viewportSize().height - lowest).toBeGreaterThanOrEqual(24);
+  });
+});
+
+test.describe('game controller', () => {
+  // A pretend Bluetooth controller (standard mapping), so the Gamepad API code can be tested without one.
+  const usePad = page =>
+    page.addInitScript(() => {
+      const pad = {
+        id: 'Test controller (STANDARD GAMEPAD)',
+        index: 0,
+        connected: true,
+        mapping: 'standard',
+        timestamp: 0,
+        axes: [0, 0, 0, 0],
+        buttons: Array.from({ length: 17 }, () => ({ pressed: false, touched: false, value: 0 })),
+      };
+      window.__pad = pad;
+      Object.defineProperty(navigator, 'getGamepads', { value: () => [pad, null, null, null], configurable: true });
+    });
+  // Sets which buttons are held and where the left stick is, then lets the game read the controller.
+  const padInput = (page, held = [], axes = [0, 0]) =>
+    page.evaluate(
+      ({ held, axes }) => {
+        window.__pad.buttons.forEach((b, i) => (b.pressed = held.includes(i)));
+        window.__pad.axes[0] = axes[0];
+        window.__pad.axes[1] = axes[1];
+        __t.pollPad();
+      },
+      { held, axes },
+    );
+  const A = 0,
+    B = 1,
+    X = 2,
+    Y = 3,
+    RB = 5,
+    START = 9,
+    DOWN = 13;
+
+  test('A starts the game, Start pauses and resumes', async ({ page }) => {
+    await usePad(page);
+    await openGame(page);
+    await padInput(page, [A]);
+    await padInput(page);
+    expect(await page.evaluate(() => [__t.mode, __t.li])).toEqual(['play', 0]);
+    await padInput(page, [START]);
+    await padInput(page);
+    expect(await mode(page)).toBe('paused');
+    await padInput(page, [START]);
+    await padInput(page);
+    expect(await mode(page)).toBe('play');
+  });
+
+  test('stick to run, A jumps, down sneaks, X sword, B star, Y Thunder Strike, RB Shadow Clones', async ({ page }) => {
+    await usePad(page);
+    await openGame(page);
+    await play(page);
+    await page.evaluate(() => __t.respawnAt(1500, 460));
+    await tick(page, 3);
+    const x0 = (await p(page)).x;
+    await padInput(page, [], [1, 0]);
+    await tick(page, 15);
+    expect((await p(page)).x, 'stick right runs right').toBeGreaterThan(x0 + 30);
+    await padInput(page, [A], [1, 0]);
+    await tick(page, 4);
+    expect((await p(page)).vy, 'A jumps').toBeLessThan(0);
+    await padInput(page);
+    await tick(page, 60);
+    await padInput(page, [DOWN]);
+    await tick(page, 2);
+    expect((await p(page)).crouch, 'd-pad down sneaks').toBe(true);
+    await padInput(page, [X]);
+    await tick(page, 2);
+    expect((await p(page)).sw, 'X swings the sword').toBeGreaterThan(0);
+    const ammo = (await p(page)).ammo;
+    await padInput(page, [B]);
+    await tick(page, 2);
+    expect((await p(page)).ammo, 'B throws a star').toBe(ammo - 1);
+    await page.evaluate(() => (__t.p.sp = 100));
+    await padInput(page, [Y]);
+    await tick(page, 2);
+    expect((await p(page)).sp, 'Y uses Thunder Strike').toBe(0);
+    await page.evaluate(() => (__t.p.sp = 100));
+    await padInput(page, [RB]);
+    await tick(page, 2);
+    expect((await p(page)).sp, 'RB uses Shadow Clones').toBe(0);
+    await padInput(page);
+  });
+
+  test('using a controller hides the touch buttons', async ({ page }, testInfo) => {
+    test.skip(!testInfo.project.use.hasTouch, 'touch screens only');
+    await usePad(page);
+    await openGame(page);
+    await page.touchscreen.tap(8, 760);
+    await play(page);
+    await expect(page.locator('#padR')).toBeVisible();
+    await padInput(page, [X]);
+    await expect(page.locator('#padR')).toBeHidden();
+  });
 });
 
 test('the game pauses when the tab is hidden', async ({ page }) => {

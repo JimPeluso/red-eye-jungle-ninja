@@ -78,7 +78,15 @@ export async function openGame(page, { seed = 1, query = '?test', paused = true,
   await page.clock.install();
   await page.goto(url + query);
   if (query.includes('test')) await page.waitForFunction(() => !!window.__t);
-  if (paused) await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 1000);
+  // Pause a moment ahead of the page's clock. Under heavy load the clock can pass that moment first; then try again.
+  for (let tries = 0; paused; tries++) {
+    try {
+      await page.clock.pauseAt((await page.evaluate(() => Date.now())) + 1000);
+      break;
+    } catch (e) {
+      if (tries >= 3) throw e;
+    }
+  }
   return page;
 }
 

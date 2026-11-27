@@ -88,7 +88,7 @@ There's **no build step**.
 | `tests/smoke.spec.mjs` | Quick checks: the Rock Snake, every level and boss starts, level flow (Master Fang → Level 11, final boss → "You beat the game!"), no two files declare the same top-level name. |
 | `tests/levels.spec.mjs` | The **level model** (below), one test per level: the boss gate can be reached, no dead ends, every coin, pouch and heart can be collected, checkpoints are safe, no snake patrols over a pit, sign text fits, builder rules. |
 | `tests/playthrough.spec.mjs` | A **bot** plays the real game from the title to "You beat the game!" and beats every boss with real hits. It also checks the model against the engine: both say the widest jumpable gap is 244px. |
-| `tests/ui.spec.mjs` | Every key, the iPad touch pad, pause, saving, tampered saves, Game Over → Try again, the HUD, the boss-defeat regression, and security (no outside requests, no CSP violations, no test hook on the live site). |
+| `tests/ui.spec.mjs` | Every key; the iPad touch pads (no dead spots, sliding never sneaks, one-thumb sneak-walk, Sword-to-Jump roll and jump attack, touch timing help); the game controller (a pretend one); pause, saving, tampered saves, Game Over → Try again, the HUD, the boss-defeat regression, and security (no outside requests, no CSP violations, no test hook on the live site). |
 
 - Every test fails on any page error or failed file load.
 - Tests use a seeded `Math.random` and Playwright's clock paused, so runs are identical. `tick(page, n)` in `tests/helpers.mjs` moves the game n frames (60 = 1 second).
@@ -338,10 +338,27 @@ Make variants with `Object.assign({}, BASE, {...})`, the way `PALS.sunset`, `PAL
 | Thunder | C or L |
 | Clones | V |
 
-**Touch**
-- The left pad has Left, Sneak and Right. It tracks the **nearest** button, so sliding a thumb from Left to Right works without lifting it.
-- The right pad has Clones, Super, Star, Sword and Jump (the biggest).
+**Touch** (redesigned November 2026 because the iPad was much harder than the keyboard; the measurements are in the `touch-controls` pull request)
+- **Each pad is one touch area** (`PADS`, `leftKeys`, `rightKeys` and `syncThumbs` in `js/main.js`). There are no dead spots: a thumb anywhere in a pad works a button. Sliding onto another button takes over without lifting the thumb.
+- **Left pad, like a d-pad:** Left and Right on top, Sneak below. Which side of the pad the thumb is on picks Left or Right, with a narrow "don't run" strip in the middle. Pulling the thumb down to the Sneak row adds Sneak. So sliding along the arrows never sneaks, and one thumb can **sneak-walk** (down and to one side).
+- **Right pad:** Clones, Super, Star, Sword and Jump (the biggest). The nearest button wins. **Between Sword and Jump does both**, an air attack with one thumb.
+- **Touch is a little more forgiving** (`touchAssist`, set by the last input): Red Eye can still jump 10 frames after running off an edge (keyboard: 7), and an early Jump is remembered for 12 frames before landing (keyboard: 8). The level model uses the keyboard numbers.
+- The buttons sit 24px above the bottom edge (the iPad's swipe-home strip), are see-through so snakes behind them stay visible, and only show while playing.
 - Icon sizes use `calc(var(--s)*.44)`, not percentages, which made them tiny on iPad.
+
+**Game controller** (Bluetooth Xbox or PlayStation pads on the iPad, through the Gamepad API; `pollPad()` in `js/main.js`, read once per frame)
+
+| Action | Xbox | PlayStation |
+|---|---|---|
+| Run, sneak | Left stick or d-pad (down = sneak) | same |
+| Jump | A (or d-pad up) | Cross |
+| Sword | X | Square |
+| Star | B | Circle |
+| Thunder Strike | Y | Triangle |
+| Shadow Clones | LB or RB | L1 or R1 |
+| Pause; pick on menus | Start (A also picks) | Options (Cross also picks) |
+
+Using a controller hides the touch buttons; touching the screen brings them back. `tests/ui.spec.mjs` tests the controller with a pretend one.
 
 If you change hearts, update `newPlayer()`, `retry()` and the "of 6" text in `champ()`.
 
