@@ -34,9 +34,13 @@ let p = null,
   swReq = 0,
   stReq = 0,
   BN = { t: 0 };
+/* What's held down right now, per input: keyboard keys, touch buttons and a game controller (main.js fills them).
+   touchAssist: the last input was a touch, so jumping is a little more forgiving (see step.js and press()). */
 const key = {},
-  tch = {};
-const held = k => !!(key[k] || tch[k]);
+  tch = {},
+  gp = {};
+let touchAssist = false;
+const held = k => !!(key[k] || tch[k] || gp[k]);
 const hit = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 const inGrass = x => GRASS.some(g => x > g[0] && x < g[1]);
 const segAt = x => SEGS.find(s => x + 34 > s[0] && x < s[1]) || SEGS[0];

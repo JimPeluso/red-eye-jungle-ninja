@@ -62,7 +62,8 @@ function step() {
   if (dx) p.face = dx;
   p.vx += (dx * (p.crouch ? 2.2 : 5.6) - p.vx) * (p.on ? 0.3 : 0.16);
   if (Math.abs(p.vx) < 0.05) p.vx = 0;
-  if (p.on) p.coy = 7;
+  // coyote time: Red Eye can still jump for a few frames after running off an edge (longer on touch screens)
+  if (p.on) p.coy = touchAssist ? 10 : 7;
   else if (p.coy > 0) p.coy--;
   if (jb > 0) jb--;
   if (jb > 0 && p.coy > 0) {

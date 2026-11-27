@@ -14,15 +14,19 @@ Open the link in Safari, tap **Share → Add to Home Screen**, and it launches f
 
 ## Controls
 
-| Action | Keyboard | iPad |
-|---|---|---|
-| Run | ← → (or A D) | Left / Right buttons |
-| Jump | Space (or ↑ / W) | **Jump** |
-| Sword | Z (or J) | **Sword** |
-| Throwing star | X (or K) | **Star** |
-| Sneak | ↓ (or S) | **Sneak** |
-| Thunder Strike (super meter full) | C (or L) | **Super** |
-| Shadow Clones (super meter full) | V | **Clones** |
+| Action | Keyboard | iPad | Game controller |
+|---|---|---|---|
+| Run | ← → (or A D) | Left / Right buttons | Left stick or d-pad |
+| Jump | Space (or ↑ / W) | **Jump** | A / Cross |
+| Sword | Z (or J) | **Sword** | X / Square |
+| Jump attack | Space + Z | thumb **between Sword and Jump** | A + X |
+| Throwing star | X (or K) | **Star** | B / Circle |
+| Sneak | ↓ (or S) | **Sneak** (or thumb down-and-sideways to sneak while moving) | Down |
+| Thunder Strike (super meter full) | C (or L) | **Super** | Y / Triangle |
+| Shadow Clones (super meter full) | V | **Clones** | LB RB / L1 R1 |
+| Pause | P or Esc | ⏸ | Start / Options |
+
+On the iPad you can slide your thumb from one button to the next without lifting it. A Bluetooth Xbox or PlayStation controller works too: connect it in the iPad's Bluetooth settings, then press any button in the game.
 
 ## The snakes
 

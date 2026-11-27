@@ -1,4 +1,4 @@
-/* Screen size, HUD, the main loop, keyboard and touch controls, buttons, save/restore and start-up. */
+/* Screen size, HUD, the main loop, keyboard, touch and game-controller input, buttons and start-up. */
 'use strict';
 /* ---------- screen, HUD, loop ---------- */
 function resize() {
@@ -57,6 +57,7 @@ function hud() {
 let last = performance.now(),
   acc = 0;
 function frame(now) {
+  pollPad();
   acc += Math.min(100, now - last);
   last = now;
   while (acc >= STEP) {
@@ -75,7 +76,7 @@ function press(k) {
     sparkle(p.x + 17, p.y + 20);
     return;
   }
-  if (k === 'J') jb = 8;
+  if (k === 'J') jb = touchAssist ? 12 : 8; // a jump pressed just before landing still happens (longer on touch)
   if (k === 'S') swReq = 6;
   if (k === 'T') stReq = 6;
   if (k === 'U') suReq = 1;
@@ -145,6 +146,7 @@ addEventListener('keydown', e => {
   if (!k) return;
   e.preventDefault();
   if (e.repeat) return;
+  touchAssist = false;
   key[k] = 1;
   press(k);
 });
@@ -153,82 +155,126 @@ addEventListener('keyup', e => {
   if (k) key[k] = 0;
 });
 addEventListener('blur', () => releaseAll());
-for (const b of document.querySelectorAll('#padR .b')) {
-  const k = b.dataset.k;
-  b.addEventListener('pointerdown', e => {
+/* ---------- touch pads ----------
+   Each pad is one big touch area, so a thumb never lands on a dead spot, and a thumb can slide onto another
+   button without lifting: the button under it takes over.
+   Left pad, like a d-pad: which side of the pad the thumb is on picks Left or Right, and pulling it down to the
+   Sneak row adds Sneak. So sliding along the arrows never sneaks, and one thumb can sneak-walk (down + a side).
+   Right pad: the nearest button wins, and the spot between Sword and Jump does both (an air attack, one thumb). */
+const PADS = [$('padL'), $('padR')];
+const thumbs = new Map(); // finger (pointerId) -> the keys it is holding
+let thumbOn = new Set(); // keys held by any finger, to notice new presses
+const centre = b => {
+  const r = b.getBoundingClientRect();
+  return { k: b.dataset.k, x: r.left + r.width / 2, y: r.top + r.height / 2, r: r.width / 2 };
+};
+function leftKeys(x, y) {
+  const [L, D, R] = ['L', 'D', 'R'].map(k => centre(PADS[0].querySelector(`[data-k=${k}]`)));
+  const mid = (L.x + R.x) / 2,
+    side = ((R.x - L.x) / 2) * 0.25, // a narrow middle strip between the arrows means "don't run"
+    keys = new Set();
+  if (x < mid - side) keys.add('L');
+  if (x > mid + side) keys.add('R');
+  if (y > (L.y + D.y) / 2) keys.add('D');
+  return keys;
+}
+function rightKeys(x, y) {
+  const near = [...PADS[1].querySelectorAll('.b')]
+    .map(centre)
+    .map(c => ({ ...c, d: Math.hypot(x - c.x, y - c.y) }))
+    .sort((a, b) => a.d - b.d);
+  const keys = new Set([near[0].k]);
+  const pair = near[0].k + near[1].k;
+  if ((pair === 'SJ' || pair === 'JS') && near[1].d - near[0].d < Math.min(near[0].r, near[1].r) * 0.45)
+    keys.add(near[1].k);
+  return keys;
+}
+function syncThumbs() {
+  const on = new Set();
+  for (const ks of thumbs.values()) for (const k of ks) on.add(k);
+  for (const k of on) if (!thumbOn.has(k)) press(k);
+  thumbOn = on;
+  for (const k of 'LRDJSTUV') tch[k] = on.has(k) ? 1 : 0;
+  for (const b of document.querySelectorAll('.pad .b')) b.classList.toggle('on', on.has(b.dataset.k));
+}
+PADS.forEach((pad, i) => {
+  const keysAt = e => (i ? rightKeys : leftKeys)(e.clientX, e.clientY);
+  pad.addEventListener('pointerdown', e => {
     e.preventDefault();
     try {
-      b.setPointerCapture(e.pointerId);
+      pad.setPointerCapture(e.pointerId);
     } catch (_) {}
-    tch[k] = 1;
-    b.classList.add('on');
-    press(k);
+    touchAssist = true;
+    thumbs.set(e.pointerId, keysAt(e));
+    syncThumbs();
     initAudio();
   });
-  const up = () => {
-    tch[k] = 0;
-    b.classList.remove('on');
+  pad.addEventListener('pointermove', e => {
+    if (!thumbs.has(e.pointerId)) return;
+    thumbs.set(e.pointerId, keysAt(e));
+    syncThumbs();
+  });
+  const up = e => {
+    thumbs.delete(e.pointerId);
+    syncThumbs();
   };
-  b.addEventListener('pointerup', up);
-  b.addEventListener('pointercancel', up);
-  b.addEventListener('lostpointercapture', up);
+  pad.addEventListener('pointerup', up);
+  pad.addEventListener('pointercancel', up);
+  pad.addEventListener('lostpointercapture', up);
+});
+
+/* ---------- game controllers: Bluetooth Xbox or PlayStation pads, read with the Gamepad API ----------
+   A / Cross jump, X / Square sword, B / Circle star, Y / Triangle Thunder Strike, LB RB / L1 R1 Shadow Clones,
+   d-pad or left stick to run, down to sneak. Start / Options pauses; on a menu, A or Start picks. */
+const GP = { 0: 'J', 1: 'T', 2: 'S', 3: 'U', 4: 'V', 5: 'V', 12: 'J', 13: 'D', 14: 'L', 15: 'R' };
+let gpBefore = [];
+function pollPad() {
+  const pad = [...(navigator.getGamepads ? navigator.getGamepads() : [])].find(g => g && g.connected);
+  if (!pad) return;
+  const now = pad.buttons.map(b => b.pressed),
+    ax = pad.axes[0] || 0,
+    ay = pad.axes[1] || 0,
+    want = {};
+  for (const [i, k] of Object.entries(GP)) if (now[i]) want[k] = 1;
+  if (ax < -0.5) want.L = 1;
+  if (ax > 0.5) want.R = 1;
+  if (ay > 0.6) want.D = 1;
+  if (now.some(Boolean) || Math.abs(ax) > 0.5 || ay > 0.6) {
+    document.documentElement.classList.add('gamepad'); // the touch buttons get out of the way
+    touchAssist = false;
+  }
+  const before = gpBefore;
+  gpBefore = now;
+  const fresh = i => now[i] && !before[i]; // pressed since the last poll
+  if (fresh(9)) {
+    if (mode === 'play') pause();
+    else primary();
+    return;
+  }
+  if (mode !== 'play') {
+    if (fresh(0)) primary();
+    return;
+  }
+  for (const k of 'LRDJSTUV') {
+    if (want[k] && !gp[k]) press(k);
+    gp[k] = want[k] ? 1 : 0;
+  }
 }
-const padL = $('padL'),
-  mv = new Map(),
-  mvB = [...padL.querySelectorAll('.b')];
-const keyAt = e => {
-  let best = 'L',
-    bd = 1e9;
-  for (const b of mvB) {
-    const r = b.getBoundingClientRect(),
-      dx = e.clientX - (r.left + r.width / 2),
-      dy = e.clientY - (r.top + r.height / 2),
-      d = dx * dx + dy * dy;
-    if (d < bd) {
-      bd = d;
-      best = b.dataset.k;
-    }
-  }
-  return best;
-};
-const syncMv = () => {
-  const ks = new Set(mv.values());
-  for (const b of mvB) {
-    const on = ks.has(b.dataset.k);
-    b.classList.toggle('on', on);
-    tch[b.dataset.k] = on ? 1 : 0;
-  }
-};
-padL.addEventListener('pointerdown', e => {
-  e.preventDefault();
-  try {
-    padL.setPointerCapture(e.pointerId);
-  } catch (_) {}
-  mv.set(e.pointerId, keyAt(e));
-  syncMv();
-  initAudio();
-});
-padL.addEventListener('pointermove', e => {
-  if (mv.has(e.pointerId)) {
-    mv.set(e.pointerId, keyAt(e));
-    syncMv();
-  }
-});
-const mvUp = e => {
-  mv.delete(e.pointerId);
-  syncMv();
-};
-padL.addEventListener('pointerup', mvUp);
-padL.addEventListener('pointercancel', mvUp);
-padL.addEventListener('lostpointercapture', mvUp);
 /* let go of every key and button, e.g. when switching apps on the iPad, so Red Eye doesn't keep running */
 function releaseAll() {
   for (const k in key) key[k] = 0;
-  for (const k in tch) tch[k] = 0;
-  mv.clear();
-  for (const b of document.querySelectorAll('.b.on')) b.classList.remove('on');
+  for (const k in gp) gp[k] = 0;
+  thumbs.clear();
+  syncThumbs();
 }
-addEventListener('touchstart', () => document.documentElement.classList.add('touch'), { passive: true, once: true });
+addEventListener(
+  'touchstart',
+  () => {
+    document.documentElement.classList.add('touch');
+    document.documentElement.classList.remove('gamepad');
+  },
+  { passive: true },
+);
 document.addEventListener('contextmenu', e => e.preventDefault());
 document.addEventListener('gesturestart', e => e.preventDefault());
 document.addEventListener('visibilitychange', () => {
@@ -301,6 +347,8 @@ if (local && /[?&]test\b/.test(location.search))
     },
     key,
     tch,
+    gp,
+    pollPad,
     LEVELS,
     BOSSES,
     PALS,
