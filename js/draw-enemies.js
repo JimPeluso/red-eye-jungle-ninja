@@ -1,4 +1,5 @@
 /* Drawing snakes: normal, sleepy, spitter, cobra, flying, two-headed and rock snakes. */
+'use strict';
 const SKIN=[{o:'#2e5e17',a:'#86d13f',b:'#9fe34d',s:'#3f7f1f',j:'#dff58a'},null,{o:'#7a2e0c',a:'#ff8f3a',b:'#ffab55',s:'#c2410c',j:'#ffe0a8'},{o:'#123c6b',a:'#3a8dde',b:'#5aa8f0',s:'#0f2f57',j:'#cfe8ff'}];
 const ROCKS={o:'#2e2a24',a:'#7a6a52',b:'#948468',s:'#4a3e30',j:'#d8cfb8'};
 function drawRock(x,y,k,peek){ctx.save();ctx.translate(x,y);ctx.scale(k,k);

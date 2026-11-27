@@ -1,4 +1,5 @@
 /* Screen size, HUD, the main loop, keyboard and touch controls, buttons, save/restore and start-up. */
+'use strict';
 /* ---------- screen, HUD, loop ---------- */
 function resize(){cw=cv.clientWidth||innerWidth;ch=cv.clientHeight||innerHeight;dpr=Math.min(window.devicePixelRatio||1,2);cv.width=Math.round(cw*dpr);cv.height=Math.round(ch*dpr);sc=Math.min(ch/WH,cw/600);offY=ch-WH*sc;viewW=cw/sc;TOP=-offY/sc}
 const HE=[...document.querySelectorAll('#hearts svg')];let hk='';
@@ -21,7 +22,7 @@ addEventListener('keydown',e=>{
  if((e.code==='Enter'||e.code==='Space')&&mode!=='play'){e.preventDefault();primary();return}
  const k=KM[e.code];if(!k)return;e.preventDefault();if(e.repeat)return;key[k]=1;press(k)});
 addEventListener('keyup',e=>{const k=KM[e.code];if(k)key[k]=0});
-addEventListener('blur',()=>{for(const k in key)key[k]=0});
+addEventListener('blur',()=>releaseAll());
 for(const b of document.querySelectorAll('#padR .b')){const k=b.dataset.k;
  b.addEventListener('pointerdown',e=>{e.preventDefault();try{b.setPointerCapture(e.pointerId)}catch(_){}tch[k]=1;b.classList.add('on');press(k);initAudio()});
  const up=()=>{tch[k]=0;b.classList.remove('on')};
@@ -33,27 +34,22 @@ padL.addEventListener('pointerdown',e=>{e.preventDefault();try{padL.setPointerCa
 padL.addEventListener('pointermove',e=>{if(mv.has(e.pointerId)){mv.set(e.pointerId,keyAt(e));syncMv()}});
 const mvUp=e=>{mv.delete(e.pointerId);syncMv()};
 padL.addEventListener('pointerup',mvUp);padL.addEventListener('pointercancel',mvUp);padL.addEventListener('lostpointercapture',mvUp);
+/* let go of every key and button, e.g. when switching apps on the iPad, so Red Eye doesn't keep running */
+function releaseAll(){for(const k in key)key[k]=0;for(const k in tch)tch[k]=0;mv.clear();for(const b of document.querySelectorAll('.b.on'))b.classList.remove('on')}
 addEventListener('touchstart',()=>document.documentElement.classList.add('touch'),{passive:true,once:true});
 document.addEventListener('contextmenu',e=>e.preventDefault());
 document.addEventListener('gesturestart',e=>e.preventDefault());
-document.addEventListener('visibilitychange',()=>{if(document.hidden)pause()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){releaseAll();pause()}});
 $('goT').onclick=newGame;
 document.querySelectorAll('.chip').forEach(c=>c.addEventListener('click',()=>{if(c.disabled)return;const i=+c.dataset.i;p=null;mode='title';startLevel(i)}));
 $('goO').onclick=retry;$('goW').onclick=nextFromWin;$('goW2').onclick=()=>startLevel(li);$('goC').onclick=toTitle;$('goP').onclick=resume;$('goQ').onclick=toTitle;
 $('pz').onclick=()=>{if(mode==='play')pause();else if(mode==='paused')resume()};
 $('snd').onclick=()=>{muted=!muted;try{localStorage.setItem('redeye-mute',muted?'1':'0')}catch(e){}setSnd();initAudio()};
 
-/* ---------- keep the game across page updates ---------- */
-const snap=()=>({v:4,li,bk,boss,mode,coins:p.coins,kills:p.kills,sneaks:p.sneaks,time:p.time,ammo:p.ammo});
-function restore(d){try{if(!d||d.v!==4)return false;
- if(d.mode==='title'){toTitle();return true}
- p=null;mode='title';li=Math.max(0,Math.min(LEVELS.length-1,d.li|0));if(d.boss)startBoss(Math.max(0,Math.min(BOSSES.length-1,d.bk|0)));else startLevel(li);
- Object.assign(p,{coins:d.coins|0,kills:d.kills|0,sneaks:d.sneaks|0,time:d.time|0,ammo:Math.max(5,d.ammo|0)});
- $('pC').textContent=p.coins;go('paused');return true}catch(e){return false}}
-function start(d){if(!restore(d))toTitle();if(!running){running=true;requestAnimationFrame(frame)}}
+/* ---------- start-up ---------- */
 load(L1);resize();
 const ro=new ResizeObserver(resize);ro.observe(cv);
-/* test hook: only exists when the page is opened with ?test (used by tests/smoke.mjs) */
-if(/[?&]test\b/.test(location.search))window.__t={get p(){return p},get snakes(){return snakes},get B(){return B},get mode(){return mode},get li(){return li},LEVELS,BOSSES,PALS,mkSnake,startLevel,startBoss,respawnAt,bossHit,unlocked};
-try{window.claude?.hot?.snapshot?.(snap)}catch(e){}
-window.claude?.hot?.ready?window.claude.hot.ready(start):start(window.claude?.hot?.data??{});
+/* test hook for the tests in tests/: only when the page is opened with ?test from this computer (file:// or localhost), never on the live site */
+const local=location.protocol==='file:'||location.hostname==='localhost'||location.hostname==='127.0.0.1';
+if(local&&/[?&]test\b/.test(location.search))window.__t={get p(){return p},get snakes(){return snakes},get B(){return B},get mode(){return mode},get li(){return li},get LT(){return LT},get spits(){return spits},get waves(){return waves},key,tch,LEVELS,BOSSES,PALS,mkSnake,startLevel,startBoss,respawnAt,bossHit,unlocked,step,draw(){render();hud()}};
+toTitle();requestAnimationFrame(frame);

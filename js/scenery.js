@@ -1,4 +1,5 @@
 /* Coins (hand-placed for Level 1, autoCoins() for the rest), background scenery and load(level). */
+'use strict';
 /* coins: level 1 is hand placed, the rest are laid out from the level shape */
 const CO=[];
 const line=(a,b,y,n)=>{for(let i=0;i<n;i++)CO.push([a+(b-a)*i/(n-1),y])};

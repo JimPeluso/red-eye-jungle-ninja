@@ -1,0 +1,24 @@
+# The Node dev container. Node, npm, the linters and the test browsers live here, never on the Mac.
+# Use the ./dev script:  ./dev npm run setup  (once),  ./dev npm test,  ./dev npm run serve
+# Packages and browsers go into the named Docker volumes below, not into the repo folder.
+# Remove everything with:  docker compose down -v  (then delete the image in Docker Desktop if you like).
+name: red-eye
+services:
+  dev:
+    image: mcr.microsoft.com/playwright:v1.65.0-noble@sha256:9beb546099e11f52d62e505537914870e01a67e0e6b00ae41da4775324e73dbe
+    working_dir: /work
+    volumes:
+      - .:/work
+      - node_modules:/work/node_modules
+      - browsers:/browsers
+    environment:
+      PLAYWRIGHT_BROWSERS_PATH: /browsers
+      npm_config_update_notifier: 'false'
+      npm_config_fund: 'false'
+    ports:
+      - '8000:8000'
+    ipc: host
+    init: true
+volumes:
+  node_modules:
+  browsers:

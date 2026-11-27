@@ -1,4 +1,5 @@
 /* Master Fang sword duel. Not used right now (no level points at BOSSES[6]); kept in case it comes back. */
+'use strict';
 /* ---------- Master Fang on foot: the sword duel (NOT USED right now; BOSSES[6] would start it) ---------- */
 function duelPick(dx){const b=B,ad=Math.abs(dx),r=Math.random(),ph2=b.phase===2;b.count++;
  if(ph2&&!b.summoned&&b.count>2){b.summoned=true;b.st='summon';b.t=40;b.raise=1;pop(b.x,GY-140,'Snakes, attack!','#d9c2ff');sfx.roar();return}

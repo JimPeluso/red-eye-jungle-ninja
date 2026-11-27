@@ -1,13 +1,25 @@
 {
   "name": "red-eye-jungle-ninja",
   "private": true,
-  "description": "Red Eye the jungle ninja: a browser platformer built with a 10-year-old game designer.",
+  "description": "Red Eye the jungle ninja: a browser platformer built with a young game designer.",
   "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
-    "test": "node tests/smoke.mjs",
-    "serve": "python3 -m http.server 8000"
+    "setup": "npm ci && playwright install chromium webkit",
+    "test": "playwright test",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "serve": "python3 -m http.server 8000 --bind 0.0.0.0"
   },
   "devDependencies": {
-    "playwright": "1.63.0"
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.65.0",
+    "eslint": "10.14.0",
+    "espree": "11.2.0",
+    "globals": "17.14.0",
+    "prettier": "3.10.1"
   }
 }

@@ -1,4 +1,5 @@
 /* Super moves (Shadow Clones, Thunder Strike), Red Eye getting hurt, Game Over, Level Clear and You Win. */
+'use strict';
 /* Shadow Clones: two shadow Red Eyes fight for 8 seconds */
 function doClones(){p.sp=0;cloneT=480;sfx.whoosh();sfx.chime();clones=[-60,60].map(off=>({x:p.x+17+off,y:p.y+p.h,off,face:p.face,sw:0,cd:0,t:0,mv:false}));
  for(const c of clones)for(let i=0;i<14;i++)parts.push({x:c.x+rnd(-14,14),y:c.y-rnd(0,60),vx:rnd(-1.5,1.5),vy:rnd(-2,.5),g:-.02,life:rnd(24,40),max:40,r:rnd(5,10),c:'rgba(110,80,170,.6)'});
@@ -37,5 +38,5 @@ function levelClear(){sfx.win();unlock(li+1);const last=li===LEVELS.length-1;
  $('wH').textContent='Level '+(li+1)+' clear!';$('wC').textContent=p.coins;$('wK').textContent=p.kills;$('wS').textContent=p.sneaks;$('wT').textContent=fmt(p.lt);
  $('wP').textContent=last?'The Spike King is waiting. Final battle!':'Next up: Level '+(li+2)+', '+LEVELS[li+1].name+'.';
  const g=$('goW');g.textContent=last?'Face the Spike King':'Next level';g.classList.toggle('purple',last);go('win')}
-function nextFromWin(){if(li>=LEVELS.length-1)startBoss(7);else startLevel(li+1)}
+function nextFromWin(){if(li>=LEVELS.length-1)startBoss(BOSSES.findIndex(b=>b.final));else startLevel(li+1)}
 function champ(){$('cC').textContent=p.coins;$('cH').textContent=p.hearts+' of 6';$('cT').textContent=fmt(p.time);go('champ')}

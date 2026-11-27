@@ -1,4 +1,5 @@
 /* One game tick: input, Red Eye physics, collisions, enemies, items, camera. */
+'use strict';
 /* ---------- one game tick ---------- */
 function step(){
  T++;
@@ -46,7 +47,7 @@ function step(){
  if(stReq>0){stReq--;if(p.stcd<=0){stReq=0;if(p.ammo>0){p.ammo--;p.stcd=16;stars.push({x:p.x+17+p.face*16,y:p.y+(p.crouch?18:24),vx:p.face*11,life:70,r:0});sfx.toss()}else{p.stcd=40;pop(p.x+17,p.y-16,'No stars left!','#fff');sfx.empty()}}}
  if(p.sup>0)p.sup--;
  if(suReq){suReq=0;if((p.sp||0)>=100)doSuper();else{pop(p.x+17,p.y-16,'Super not ready yet','#fff');sfx.empty()}}
- if(clReq){clReq=0;if(cloneT>0){}else if((p.sp||0)>=100)doClones();else{pop(p.x+17,p.y-16,'Super not ready yet','#fff');sfx.empty()}}
+ if(clReq){clReq=0;if(cloneT<=0){if((p.sp||0)>=100)doClones();else{pop(p.x+17,p.y-16,'Super not ready yet','#fff');sfx.empty()}}}
  if(cloneT>0)updClones();
  if(p.on&&Math.abs(p.vx)>.3)p.run+=Math.abs(p.vx)*.09;
  const cx=p.x+p.w/2,cy=p.y+p.h/2;

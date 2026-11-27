@@ -1,0 +1,27 @@
+# Turns on auto-merge for Dependabot's minor and patch updates to the npm test tools.
+# GitHub then merges the pull request only after the CI "test" check passes (required by the rule on main).
+# Major versions, GitHub Actions and the container image are left for a person to review.
+# This is GitHub's documented pattern: https://docs.github.com/en/code-security/dependabot/working-with-dependabot/automating-dependabot-with-github-actions
+name: Dependabot auto-merge
+
+on: pull_request
+
+permissions: {}
+
+jobs:
+  auto-merge:
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'JimPeluso/red-eye-jungle-ninja'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - id: meta
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+      - name: Auto-merge minor and patch npm updates once CI passes
+        if: steps.meta.outputs.package-ecosystem == 'npm_and_yarn' && steps.meta.outputs.update-type != 'version-update:semver-major'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

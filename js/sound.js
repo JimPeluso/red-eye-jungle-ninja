@@ -1,4 +1,5 @@
 /* Sound effects, made with the Web Audio API (no sound files). */
+'use strict';
 /* ---------- sound ---------- */
 let ac=null,nb=null,muted=false;
 try{muted=localStorage.getItem('redeye-mute')==='1'}catch(e){}
@@ -27,5 +28,6 @@ const sfx={
  whoosh:()=>noise(.3,.18,900),
  bossHit:()=>{tone(520,.12,'square',.06,200);noise(.12,.2,1500)}
 };
-function setSnd(){$('sOn').hidden=muted;$('sOff').hidden=!muted}
+/* the icons are <svg>, which has no .hidden property, so set the attribute itself */
+function setSnd(){$('sOn').toggleAttribute('hidden',muted);$('sOff').toggleAttribute('hidden',!muted);$('snd').setAttribute('aria-pressed',String(muted))}
 setSnd();

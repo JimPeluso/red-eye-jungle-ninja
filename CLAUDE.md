@@ -4,7 +4,7 @@ Red Eye is a ninja with a red headband fighting snakes in a jungle. It's a side-
 
 - **Who's who.** The **game designer is a 10-year-old boy**: the ideas, names and rules are his. His dad (the repo owner) runs the project, builds it with Claude and reviews the code.
 - **Where it's played.** Mostly on an **iPad in landscape** with the on-screen touch buttons, sometimes on a laptop with the keyboard.
-- **Play link.** <https://jimpeluso.github.io/red-eye-jungle-ninja/> (GitHub Pages, deployed from `main`).
+- **Play link.** <https://jimpeluso.github.io/red-eye-jungle-ninja/> (GitHub Pages, deployed by CI from `main` once the tests pass).
 - **The repo is public.** Never put the kid's name, photos, school or any other personal details into code, commits or docs.
 
 ---
@@ -67,32 +67,48 @@ He also once mentioned his own snake idea (option "4") but never described it. A
 
 There's **no build step**.
 
+**Node is never installed on the Mac.** Dad wants the Mac kept clean, so every npm, Node, ESLint, Prettier and Playwright command runs in the dev container (`compose.yaml`, the official Playwright image) through the `./dev` script. Don't `brew install node` or run `npm` directly on the Mac. git and `gh` run on the Mac as usual.
+
+**One-time setup**
+- Docker Desktop must be running (`open -a Docker`).
+- `./dev npm run setup` installs the packages and the test browsers into Docker volumes, not the repo folder (`node_modules/` on the Mac stays an empty mount point).
+- VS Code can also "Reopen in Container" (`.devcontainer/`).
+- To remove it all: `docker compose down -v`, then delete the image in Docker Desktop.
+
 **Run it**
-- Open `index.html` in a browser, or run `npm run serve` (uses `python3 -m http.server 8000`) and go to <http://localhost:8000>.
+- Double-click `index.html`, or `./dev npm run serve` and go to <http://localhost:8000>.
 - To try it on the iPad before pushing: serve it and open `http://<laptop-ip>:8000` on the same Wi-Fi.
 
 **Test it**
-- One-time setup: `npm install && npx playwright install chromium`.
-- Then `npm test` runs `tests/smoke.mjs` in headless Chromium at 1024×768 (iPad landscape).
+- `./dev npm test` runs everything (about 3 minutes): Chromium as a laptop with a keyboard, and WebKit (Safari's engine) as an iPad in landscape.
+- `./dev npm run lint` runs ESLint. `./dev npm run format` runs Prettier (CI runs `format:check` and fails on unformatted code).
 
-| What the smoke test checks | Details |
+| Test file | What it checks |
 |---|---|
-| Level data | No pit has more than 220px with nothing to land on. Generated levels also obey the builder rules (section 4). Every gate is on ground, every boss and palette exists. |
-| Rock Snake | Clangs while hidden, pops out, can be beaten. |
-| Burrowing bosses | Ember and Shadow each go underground, chase, burst up, lie dazed, and can be hit while dazed. |
-| Levels | Plays a few seconds of all 23. |
-| Bosses | Starts every boss a level uses. |
-| Level flow | Beating Master Fang leads to Level 11; beating the final boss shows the "You beat the game!" screen. |
-| Errors | Fails on any page error. |
+| `tests/smoke.spec.mjs` | Quick checks: the Rock Snake, the burrowing bosses (Ember, Shadow) go underground, burst up and can be hit while dazed, every level and boss starts, level flow (Master Fang → Level 11, final boss → "You beat the game!"), no two files declare the same top-level name. |
+| `tests/levels.spec.mjs` | The **level model** (below), one test per level: the boss gate can be reached, no dead ends, every coin, pouch and heart can be collected, checkpoints are safe, no snake patrols over a pit, sign text fits, builder rules. |
+| `tests/playthrough.spec.mjs` | A **bot** plays the real game from the title to "You beat the game!" and beats every boss with real hits. It also checks the model against the engine: both say the widest jumpable gap is 244px. |
+| `tests/ui.spec.mjs` | Every key, the iPad touch pad, pause, saving, tampered saves, Game Over → Try again, the HUD, the boss-defeat regression, and security (no outside requests, no CSP violations, no test hook on the live site). |
 
-- Screenshots go to `tests/shots/` (gitignored). **Look at them after any visual change.** The test only proves nothing crashed, not that it looks right.
-- Opening the page with `?test` exposes `window.__t`, a test hook with getters for `p`, `snakes`, `B`, `mode` and `li`, plus `LEVELS`, `BOSSES`, `PALS`, `mkSnake`, `startLevel`, `startBoss`, `respawnAt`, `bossHit` and `unlocked`. Without `?test` it doesn't exist.
+- Every test fails on any page error or failed file load.
+- Tests use a seeded `Math.random` and Playwright's clock paused, so runs are identical. `tick(page, n)` in `tests/helpers.mjs` moves the game n frames (60 = 1 second).
+- Screenshots go to `tests/shots/<browser>/` (gitignored). **Look at them after any visual change.** Tests prove things work, not that they look right.
+- The `?test` hook, `window.__t`, only exists when the page is opened from a local file or `localhost`, never on the live site. It has getters for `p`, `snakes`, `B`, `mode`, `li`, `LT`, `spits` and `waves`, the `key` and `tch` inputs, and `LEVELS`, `BOSSES`, `PALS`, `mkSnake`, `startLevel`, `startBoss`, `respawnAt`, `bossHit`, `unlocked`, `step` and `draw`.
+
+**The level model** (`tests/model/`)
+- `measure.mjs` records Red Eye's jumps and falls frame by frame from the real `step()`, so changes to jumping or running are picked up automatically.
+- `reach.mjs` uses those with the landing rules of `step.js` (one-way logs, moving logs, which surface catches him first, coyote jumps, pit walls) to find every surface he can reach and everything he can collect. If you change the landing rules in `step.js`, update `reach.mjs` to match.
+- `bot.mjs` follows the model's map in the real engine: it tries a jump, checks where Red Eye actually landed, and rewinds if it went wrong.
+- When a level change breaks a test, the message names the level and the problem, e.g. "coin 12 at (1450, 300)". **Level fixes are the designer's call:** show him the problem and offer options.
 
 **Ship it**
-- Push to `main`. GitHub Pages redeploys in about a minute.
+- Push to `main` (or merge a pull request). CI (`.github/workflows/ci.yml`) runs lint, the format check and every test. If they pass, it deploys **only the game files** (`index.html`, `manifest.webmanifest`, `css/`, `js/`, `fonts/`, `icons/`) to GitHub Pages, about 5 minutes after the push.
+- If CI fails, nothing is deployed and the iPad keeps the last good version.
 - On the iPad, "Add to Home Screen" makes it a full-screen app (via `manifest.webmanifest` and the `icons/` folder).
+- **Dependabot** opens update pull requests on Mondays for the test tools, the GitHub Actions and the container image. Minor and patch updates to the npm tools merge themselves once CI passes. Everything else waits for Dad.
+- The `main` branch blocks force-pushes and deletion, and requires the `test` check on pull requests. Dad (admin) can still push straight to `main`.
 
-**Before every push:** `npm test` passes, and you've looked at the screenshots for anything visual.
+**Before every push:** `./dev npm test` passes, and you've looked at the screenshots for anything visual.
 
 ---
 
@@ -103,8 +119,11 @@ Every file in `js/` is a **plain classic `<script>`**, not a module. They all sh
 Rules that follow from that:
 
 - **Top-level code in a file can only use things from files loaded before it.** Functions can call anything when they run.
-- **Never declare the same top-level name in two files.** That's a SyntaxError and the whole game goes blank.
+- **Never declare the same top-level name in two files.** That's a SyntaxError and the whole game goes blank. ESLint and the smoke test both catch it.
 - **Adding a file means adding a `<script>` tag** in the right place in `index.html`.
+- **Every file starts with its one-line header comment, then `'use strict';`.**
+- ESLint builds each file's allowed globals from the top-level names the other files declare (`eslint.config.mjs`), so a typo in a name fails `./dev npm run lint`. No list to keep up to date.
+- Formatting is Prettier (`.prettierrc.json`, 120 columns): one statement per line. Don't hand-compress code. `.git-blame-ignore-revs` hides the one big reformat from `git blame`.
 
 | File | What's in it |
 |---|---|
@@ -126,7 +145,7 @@ Rules that follow from that:
 | `js/draw-ninjas.js` | `fig()` (any ninja), `ninja()` (Red Eye), `fang()`, plus dormant evil-ninja and duel drawing |
 | `js/draw-boss.js` | The giant cobra body and head, temple walls and torches |
 | `js/render.js` | Lightning bolts, health bars, shock waves, grass, then `world()` and `render()` |
-| `js/main.js` | `resize`, `hud`, the main loop, keyboard and touch controls, buttons, save/restore, start-up |
+| `js/main.js` | `resize`, `hud`, the main loop, keyboard and touch controls, buttons, start-up, the `?test` hook |
 
 **Coordinates and camera**
 - The world is 580 units tall, and the top of the ground is `GY=460`. The canvas is scaled by `sc` to fit the screen.
@@ -146,8 +165,9 @@ Rules that follow from that:
 **Saved data** (in `localStorage`, always wrapped in try/catch)
 - `redeye-unlock` is the highest unlocked level index; `redeye-mute` is the sound setting.
 - Saves are per web address. The game used to live at a claude.ai artifact link, so unlocks didn't carry over to GitHub Pages.
+- Saved values are untrusted (anyone can edit them in their browser): `unlocked()` clamps them, and `tests/ui.spec.mjs` checks tampered values.
 
-**Leftovers from the artifact days.** `window.claude?.hot` (snapshot/restore across live reloads) comes from when this was a claude.ai artifact. It does nothing on GitHub Pages and is harmless. The old artifact link is frozen at version 38.
+The old claude.ai artifact link is frozen at version 38. Its snapshot/restore code (`window.claude.hot`) was removed from this repo on November 27, 2026.
 
 ---
 
@@ -205,7 +225,7 @@ Health 2.2 for the special kinds comes from his rule: "special snakes have 10% m
 4. Add any special hit rules in `step()` (step.js). The hidden Rock Snake skip is the example to copy.
 5. Draw it in `snake()` (draw-enemies.js) and give it a death-puff colour in `kill`.
 6. Place it in levels. Optionally add it to the `genLevel` pool, but read the reshuffle warning above first.
-7. Add a check to `tests/smoke.mjs`.
+7. Add a check to `tests/smoke.spec.mjs`, like the Rock Snake one. (The level model already checks every snake stands on solid ground.)
 
 ### Bosses (`js/bosses.js`)
 
@@ -359,13 +379,15 @@ If you change hearts, update `newPlayer()`, `retry()` and the "of 6" text in `ch
   - the level added to `LEVELS`
   - a level-select chip in `index.html` (`data-i` is the 0-based index)
   - the title pill text updated
-  - `npm test`
+  - `./dev npm test` (the level model checks the new level can be finished and everything in it reached)
 
   `unlocked()` and save restore read `LEVELS.length` and `BOSSES.length`, so they adjust on their own.
 - **`[hidden]{display:none!important}` must stay** in the CSS. All menu screens rely on it.
 - **Sounds need a tap first.** Audio only starts after a tap or click (`initAudio()` on Play); that's an iPad rule.
 - **iPad performance.** Avoid creating lots of gradients or shadows per object per frame. The "realistic" art dropped to about 30 fps at Retina resolution. The fixed timestep keeps the game speed right, but it looks choppy.
-- **Fonts** come from Google Fonts. Without a connection it falls back to system fonts, which is fine.
+- **Fonts** are stored in `fonts/` (Lilita One and Nunito 700/800, Latin letters, SIL Open Font License), so the game never contacts another website.
+- **Security rules (Content-Security-Policy in `index.html`).** The page may only load its own files and can't run inline code: no `<script>` without `src`, no `onclick="…"` or `style="…"` attributes in the HTML, no `<style>` tags. Setting `element.style.x` from JS is fine. Anything from another website (a font, script or image) would need the policy changed, so copy the file into the repo instead.
+- **`<svg>` elements have no `.hidden` property.** Use `el.toggleAttribute('hidden', on)`. (The mute icon never changed because of this.)
 - **Boss pop-up text** indexes with `((hp%3)+3)%3`, because health can go negative from multi-damage hits.
 - **Level-select chips** always call `startLevel(i)`. A leftover special case once made chip 7 start the Master Fang duel.
 - **Sleeping snakes** must still die in one hit from `hitEnemy` (the sneak attack). Keep that when changing damage rules.
@@ -376,3 +398,8 @@ If you change hearts, update `newPlayer()`, `retry()` and the "of 6" text in `ch
 
 - **November 2026:** started as a claude.ai artifact (38 versions) through an interview with the designer.
 - **November 27, 2026:** moved to this repo. The game was split from one 113 KB HTML file into `css/` and `js/`, with no behaviour changes. Added the smoke test, the app icon and manifest, and GitHub Pages.
+- **November 27, 2026 (later):** security review and QA pass.
+  - Tooling: dev container, ESLint and Prettier, CI that deploys only when the tests pass, Dependabot.
+  - Security: fonts copied into the repo, a Content-Security-Policy, the test hook made local-only.
+  - Tests: the level model and the bot playthrough.
+  - Fixed: Game Over during a boss's defeat animation, the mute icon never changing, touch buttons staying "held" after switching apps.

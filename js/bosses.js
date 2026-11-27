@@ -1,4 +1,5 @@
 /* BOSSES: every giant cobra boss (name, health, attacks, colours). */
+'use strict';
 /* the giant cobras: one boss per level (see LEVELS[i].boss). Master Fang (5) rides his own; the Spike King (7) is the final boss */
 const BOSSES=[
  {name:'Moss',sub:'the giant green cobra',pal:'jungle',hp:30,minion:0,atk:['lunge','slam','summon'],col:{o:'#1d3d0f',a:'#4f9a2a',b:'#62b034',h:'#86cc4e',m:'#d9f27a',bl:'#eef7a8'}},

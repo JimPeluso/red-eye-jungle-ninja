@@ -1,0 +1,36 @@
+# Dependabot keeps the test tools, the GitHub Actions and the dev container image up to date.
+# None of these ship to the game site: the game itself has no dependencies.
+# Minor and patch updates to the npm tools merge themselves once CI passes (workflows/dependabot-auto-merge.yml).
+# Major versions, Actions and the container image wait for a person to review.
+# cooldown: a new release has to be a week old before Dependabot offers it (security fixes skip the wait).
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    groups:
+      test-tools:
+        update-types: [minor, patch]
+    open-pull-requests-limit: 5
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ['*']
+
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule:
+      interval: monthly
+    cooldown:
+      default-days: 7

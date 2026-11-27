@@ -1,10 +1,12 @@
 # Red Eye: Jungle Ninja
 
+[![CI](https://github.com/JimPeluso/red-eye-jungle-ninja/actions/workflows/ci.yml/badge.svg)](https://github.com/JimPeluso/red-eye-jungle-ninja/actions/workflows/ci.yml)
+
 **▶ Play: <https://jimpeluso.github.io/red-eye-jungle-ninja/>**
 
 Red Eye is a jungle ninja with a red headband and a Thunder Blade. Run, jump, sneak and fight your way through **23 levels** of snakes. Every level ends with a giant cobra boss. **Master Fang** rides his spiked cobra on Level 10, and the **Spike King** waits on Level 23.
 
-Designed by a 10-year-old and built by his dad with Claude.
+Designed by a young game designer and built together with Claude.
 
 ## On an iPad
 
@@ -34,12 +36,14 @@ Open the link in Safari, tap **Share → Add to Home Screen**, and it launches f
 
 ## Run it yourself
 
-There's no build step. Open `index.html` in a browser, or:
+There's no build step: open `index.html` in a browser.
+
+The tools run in a Docker container, so the only thing you need installed is [Docker](https://www.docker.com/products/docker-desktop/):
 
 ```sh
-npm run serve        # http://localhost:8000
-npm install && npx playwright install chromium   # once, for tests
-npm test             # plays every level and boss in a headless browser
+./dev npm run setup   # once: installs the test tools inside Docker
+./dev npm test        # every test: a bot plays the whole game, every level is checked
+./dev npm run serve   # play at http://localhost:8000
 ```
 
-How the code is organised, the level and boss formats, and the design rules are all in [CLAUDE.md](CLAUDE.md).
+Every push to `main` is tested, and the site only updates when the tests pass. How the code is organised, the level and boss formats, and the design rules are all in [CLAUDE.md](CLAUDE.md). To report a security problem, see [SECURITY.md](SECURITY.md).

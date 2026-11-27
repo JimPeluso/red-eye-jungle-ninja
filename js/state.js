@@ -1,6 +1,7 @@
 /* Game state, small helpers, mkSnake(), starting levels and bosses, screens and level unlocks. */
+'use strict';
 /* ---------- state ---------- */
-let p=null,B=null,bolts=[],flash=0,suReq=0,clones=[],cloneT=0,clReq=0,coins,snakes,stars,waves,spits,items,parts,pops,lit,pouches,mode='title',T=0,cam=0,shake=0,sc=1,offY=0,viewW=800,TOP=0,cw=1,ch=1,dpr=1,jb=0,swReq=0,stReq=0,running=false,BN={t:0};
+let p=null,B=null,bolts=[],flash=0,suReq=0,clones=[],cloneT=0,clReq=0,coins,snakes,stars,waves,spits,items,parts,pops,lit,pouches,mode='title',T=0,cam=0,shake=0,sc=1,offY=0,viewW=800,TOP=0,cw=1,ch=1,dpr=1,jb=0,swReq=0,stReq=0,BN={t:0};
 const key={},tch={};
 const held=k=>!!(key[k]||tch[k]);
 const hit=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
