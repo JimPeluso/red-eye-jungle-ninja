@@ -1,0 +1,14 @@
+{
+  "name": "Red Eye Jungle Ninja",
+  "dockerComposeFile": "../compose.yaml",
+  "service": "dev",
+  "workspaceFolder": "/work",
+  "overrideCommand": true,
+  "postCreateCommand": "npm run setup",
+  "forwardPorts": [8000],
+  "customizations": {
+    "vscode": {
+      "extensions": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode"]
+    }
+  }
+}

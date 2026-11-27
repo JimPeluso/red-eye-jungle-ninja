@@ -1,0 +1,5 @@
+# Commits git blame should skip (whole-file reformatting). GitHub uses this file automatically.
+# Locally: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Format all code with Prettier (no behaviour change)
+fa00ba37760441e85a7d4d2ed7fd7488dd3e0155
