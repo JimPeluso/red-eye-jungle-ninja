@@ -79,7 +79,7 @@ There's **no build step**.
 |---|---|
 | Level data | No pit has more than 220px with nothing to land on. Generated levels also obey the builder rules (section 4). Every gate is on ground, every boss and palette exists. |
 | Rock Snake | Clangs while hidden, pops out, can be beaten. |
-| Shadow's burrow | Goes underground, chases, bursts up, lies dazed, can be hit while dazed. |
+| Burrowing bosses | Ember and Shadow each go underground, chase, burst up, lie dazed, and can be hit while dazed. |
 | Levels | Plays a few seconds of all 23. |
 | Bosses | Starts every boss a level uses. |
 | Level flow | Beating Master Fang leads to Level 11; beating the final boss shows the "You beat the game!" screen. |
@@ -232,7 +232,7 @@ The hood markings are a ring and a diamond. They once looked like a second pair 
 | 0 | Moss | 1 | 30 |
 | 1 | Thunder | 2 | 35 |
 | 2 | Tide | 3 | 40 |
-| 3 | Ember | 4 | 45 |
+| 3 | Ember (also **burrows**) | 4 | 45 |
 | 4 | Shadow (the one that **burrows**) | 5 | 50 |
 | 11 | Venom | 6 | 60 |
 | 8 | Magma | 7 | 55 |
@@ -257,7 +257,7 @@ The hood markings are a ring and a diamond. They once looked like a second pair 
 
 Boss fight mechanics:
 - Every boss has a **phase 2** below half health: faster, more snakes.
-- **Burrow** (only Shadow has it, his idea: "cave snake can go underground"). The sequence:
+- **Burrow** (Ember on Level 4 and Shadow on Level 5; his idea: "cave snake can go underground", then "a snake on Level 4 too"). The sequence:
   1. `dive`: the cobra sinks into the ground.
   2. `under`: a dirt mound, with the cobra's back poking out, chases Red Eye.
   3. `rumble`: it stops under him with a "!" and red eyes in the crack. That's the warning to move.
@@ -341,7 +341,7 @@ If you change hearts, update `newPlayer()`, `retry()` and the "of 6" text in `ch
 - **23 levels**, each with its own world and giant cobra boss. They get harder as you go: tougher bosses, faster and more numerous snakes, wider gaps that always have something to land on.
 - **Level 10: Master Fang riding his giant spiked cobra.** It's a boss battle, not the final boss, and there's no sword duel and no throwing stars for Master Fang. He was made easier once already.
 - **Level 23: the Spike King** is the final boss. He has spikes and shoots spikes.
-- **Level 5: Shadow, the giant cave cobra, goes underground** and bursts up under Red Eye.
+- **Levels 4 and 5: Ember and Shadow go underground** and burst up under Red Eye.
 - **Snakes are normal size** (`GS=1`). Giant snakes were tried and reverted.
 - **Cartoon art.** "Realistic" art was tried and fully reverted.
 - **No evil ninjas, no ice snakes or ice balls.** Removed by request; the code is dormant.

@@ -1,8 +1,8 @@
 /* Giant cobra boss AI: picking attacks, summoning snakes, taking hits, the state machine. */
 /* ---------- boss AI: every giant cobra, including Master Fang's ---------- */
 function pickAttack(){const b=B,A=b.cfg.atk,small=snakes.filter(s=>s.alive).length,r=Math.random();b.count++;
- if(A.includes('summon')&&small<(b.phase===2?3:2)&&r<.24&&b.count>1){b.st='summon';b.t=46;b.raise=b.cfg.rider?1:0;sfx.roar();pop(b.hx+6,b.hy-150,b.cfg.rider?'Snakes, attack!':'Hisssss!','#d9c2ff');return}
  if(A.includes('burrow')&&(b.count===2||(b.count>3&&r>.5&&r<.85))){b.st='dive';b.t=34;b.ug=true;b.sink=0;b.hole=null;sfx.hiss();pop(b.hx-10,b.hy-100,'Into the ground!','#d9c2ff');return}
+ if(A.includes('summon')&&small<(b.phase===2?3:2)&&r<.24&&b.count>1){b.st='summon';b.t=46;b.raise=b.cfg.rider?1:0;sfx.roar();pop(b.hx+6,b.hy-150,b.cfg.rider?'Snakes, attack!':'Hisssss!','#d9c2ff');return}
  const other=A.filter(a=>a!=='lunge'&&a!=='summon'&&a!=='burrow');
  if(!other.length||r<.6||b.count%3===0){b.st='windup';b.t=b.phase===2?32:46;b.from=b.hx;sfx.hiss();return}
  const k=other[Math.floor(Math.random()*other.length)];b.st=k;b.t=k==='wave'?50:k==='slam'?40:k==='spikes'?46:30;if(k!=='wave')sfx.hiss()}

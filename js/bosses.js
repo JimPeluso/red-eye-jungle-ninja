@@ -4,7 +4,7 @@ const BOSSES=[
  {name:'Moss',sub:'the giant green cobra',pal:'jungle',hp:30,minion:0,atk:['lunge','slam','summon'],col:{o:'#1d3d0f',a:'#4f9a2a',b:'#62b034',h:'#86cc4e',m:'#d9f27a',bl:'#eef7a8'}},
  {name:'Thunder',sub:'the giant blue cobra',pal:'tree',hp:35,minion:3,atk:['lunge','slam','summon'],col:{o:'#0f2c52',a:'#2f74c4',b:'#3f88da',h:'#6aa9ec',m:'#cfe8ff',bl:'#dff0ff'}},
  {name:'Tide',sub:'the giant river cobra',pal:'river',hp:40,minion:0,atk:['lunge','spit','summon'],col:{o:'#0b3a40',a:'#1f8f8a',b:'#2aa7a0',h:'#56c7bf',m:'#bff5ec',bl:'#e3fff7'}},
- {name:'Ember',sub:'the giant fire cobra',pal:'temple',hp:45,minion:2,atk:['lunge','spit','slam','summon'],col:{o:'#5a1f08',a:'#e0621f',b:'#f27a2e',h:'#ff9d55',m:'#ffe08a',bl:'#ffe9b8'}},
+ {name:'Ember',sub:'the giant fire cobra',pal:'temple',hp:45,minion:2,atk:['lunge','spit','slam','summon','burrow'],col:{o:'#5a1f08',a:'#e0621f',b:'#f27a2e',h:'#ff9d55',m:'#ffe08a',bl:'#ffe9b8'}},
  {name:'Shadow',sub:'the giant cave cobra',pal:'cave',hp:50,minion:3,atk:['lunge','spit','slam','summon','burrow'],redEye:true,col:{o:'#0d0d18',a:'#3a3a52',b:'#4a4a66',h:'#5e5e80',m:'#ff3b30',bl:'#a0a0c0'}},
  {name:'Master Fang',sub:'and his giant cobra',pal:'castle',hp:80,minion:3,atk:['lunge','wave','summon'],rider:true,spikes:true,col:{o:'#24104a',a:'#6b3fb3',b:'#7b4ccc',h:'#9a6be0',m:'#f2b632',bl:'#f3d36b'}},
  {name:'Master Fang',sub:'sword duel, no cobra',pal:'fortress',hp:100,duel:true,atk:[],col:{o:'#24104a',a:'#6b3fb3',b:'#7b4ccc',h:'#9a6be0',m:'#f2b632',bl:'#f3d36b'}},

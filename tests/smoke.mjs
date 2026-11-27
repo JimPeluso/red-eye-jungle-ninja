@@ -92,22 +92,27 @@ for (const k of used) {
   await page.screenshot({ path: path.join(shots, `boss-${String(k).padStart(2, '0')}.png`) });
   check(await page.evaluate(() => !!__t.B && __t.mode === 'play'), `boss ${k} (${await page.evaluate(k => __t.BOSSES[k].name, k)}) starts`);
 }
-// Shadow (Level 5) burrows: dives, chases Red Eye as a dirt mound, bursts up, then lies dazed and can be hit.
-await page.evaluate(() => { __t.startLevel(4); __t.startBoss(4); });
-await wait(2200);
-await page.evaluate(() => { __t.respawnAt(250, 460); __t.p.inv = 9999; __t.B.st = 'idle'; __t.B.t = 1; __t.B.count = 1; });
-const burrowStates = new Set();
-for (let i = 0; i < 200; i++) {
-  await wait(40);
-  const st = await page.evaluate(() => __t.B.st); burrowStates.add(st);
-  if (st === 'under' && !burrowStates.has('shot')) { burrowStates.add('shot'); await page.screenshot({ path: path.join(shots, 'shadow-burrow.png') }); }
-  if (st === 'dazed') break;
+// Bosses that burrow (Ember on Level 4, Shadow on Level 5): dive, chase Red Eye as a dirt mound, burst up,
+// then lie dazed and can be hit.
+const burrowers = await page.evaluate(() => __t.LEVELS.map((L, i) => [i, L.boss]).filter(([i, k]) => __t.BOSSES[k].atk.includes('burrow')));
+for (const [lvl, k] of burrowers) {
+  const name = await page.evaluate(k => __t.BOSSES[k].name, k);
+  await page.evaluate(([lvl, k]) => { __t.startLevel(lvl); __t.startBoss(k); }, [lvl, k]);
+  await wait(2200);
+  await page.evaluate(() => { __t.respawnAt(250, 460); __t.p.inv = 9999; __t.B.st = 'idle'; __t.B.t = 1; __t.B.count = 1; });
+  const seen = new Set();
+  for (let i = 0; i < 200; i++) {
+    await wait(40);
+    const st = await page.evaluate(() => __t.B.st); seen.add(st);
+    if (st === 'under' && !seen.has('shot')) { seen.add('shot'); await page.screenshot({ path: path.join(shots, `burrow-${name.toLowerCase()}.png`) }); }
+    if (st === 'dazed') break;
+  }
+  check(['dive', 'under', 'rumble', 'burst', 'dazed'].every(s => seen.has(s)), `${name} (Level ${lvl + 1}) goes underground, chases, bursts up and lies dazed`);
+  const hp = await page.evaluate(() => __t.B.hp);
+  await page.evaluate(() => { __t.p.x = __t.B.hx - 80; __t.p.face = 1; });
+  for (let n = 0; n < 3; n++) { await page.keyboard.press('KeyZ'); await wait(250); }
+  check(await page.evaluate(h => __t.B.hp < h, hp), `${name} can be hit while dazed`);
 }
-check(['dive', 'under', 'rumble', 'burst', 'dazed'].every(s => burrowStates.has(s)), 'Shadow goes underground, chases, bursts up and lies dazed');
-const shadowHp = await page.evaluate(() => __t.B.hp);
-await page.evaluate(() => { __t.p.x = __t.B.hx - 80; __t.p.face = 1; });
-for (let k = 0; k < 3; k++) { await page.keyboard.press('KeyZ'); await wait(250); }
-check(await page.evaluate(h => __t.B.hp < h, shadowHp), 'Shadow can be hit while dazed');
 
 async function beat(levelIndex) {
   await page.evaluate(i => { __t.startLevel(i); __t.startBoss(__t.LEVELS[i].boss); __t.p.inv = 9999; }, levelIndex);
