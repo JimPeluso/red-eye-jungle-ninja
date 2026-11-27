@@ -142,6 +142,7 @@ function world() {
     else venom(v);
   }
   for (const w of waves) wave(w);
+  drawZones();
   for (const s of stars) shuriken(s.x, s.y, 9, s.r);
   for (const q of parts) {
     ctx.globalAlpha = Math.max(0, q.life / q.max);

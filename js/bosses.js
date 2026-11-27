@@ -4,6 +4,7 @@
 const BOSSES = [
   {
     name: 'Moss',
+    mad: 'vines',
     sub: 'the giant green cobra',
     pal: 'jungle',
     hp: 30,

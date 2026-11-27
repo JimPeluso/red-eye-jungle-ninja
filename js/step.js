@@ -229,7 +229,7 @@ function step() {
       sfx.hiss();
     }
     moveSnake(s);
-    if (s.dy < 0) continue;
+    if (s.dy < 0 || ghostFaded(s)) continue;
     const b = ebox(s);
     if (s.rock && !s.rk) {
       if (s.inv <= 0 && swing && hit(blade, b)) {
@@ -247,13 +247,16 @@ function step() {
       continue;
     }
     if (swing && hit(blade, b)) {
-      hitEnemy(s, 2);
-      if (!s.alive) continue;
+      if (shieldFront(s, cx)) clangOff(s);
+      else {
+        hitEnemy(s, 2);
+        if (!s.alive) continue;
+      }
     }
     const st = stars.find(q => q.life > 0 && hit({ x: q.x - 8, y: q.y - 8, w: 16, h: 16 }, b));
     if (st) {
       st.life = 0;
-      if (s.type === 6 && s.atk > 0) {
+      if ((s.type === 6 && s.atk > 0) || (s.shield && Math.sign(st.vx) === -s.dir)) {
         pop(s.x, s.y - 92, 'Clang!', '#dfe6ea');
         sparkle(st.x, st.y);
         sfx.clang();
@@ -320,6 +323,7 @@ function step() {
     }
   }
   spits = spits.filter(v => v.life > 0);
+  stepZones(pb);
   if (boss && B) {
     if (B.cfg.duel) duelStep();
     else bossStep();
@@ -345,7 +349,7 @@ function step() {
     } else if (live) {
       const fb = b.cfg.rider ? { x: b.hx - 12, y: b.hy - 40 - 74, w: 36, h: 74 } : { x: -1e4, y: 0, w: 0, h: 0 },
         hb = { x: b.hx - 42, y: b.hy - 30, w: 74, h: 52 },
-        stuck = b.st === 'stuck';
+        stuck = b.st === 'stuck' || b.st === 'dazed';
       if (swing && b.inv <= 0 && (hit(blade, fb) || (stuck && hit(blade, hb)))) bossHit(2);
       for (const st of stars) {
         if (st.life <= 0) continue;

@@ -39,6 +39,13 @@ On the iPad you can slide your thumb from one button to the next without lifting
 - **Flying snake:** swoops down from above.
 - **Two-headed snake:** bites both ways.
 - **Rock Snake:** looks like a boulder (your sword just goes *clang*). Wait for it to pop out, then strike.
+- **Drop Snake:** hangs from a vine and drops on you. Watch for the shaking leaves.
+- **Spring Snake:** coils up and hops at you. Run under it or slash it when it lands.
+- **Fire Snake:** leaves little flames behind it. Come at it from the front.
+- **Shield Snake:** its shield blocks your sword. Jump over it and hit its back.
+- **Ghost Snake:** fades in and out. Hit it while it's solid.
+
+When a boss gets mad (half health), it can have its own special move. Watch out for Moss's **Vine Grab**!
 
 ## Run it yourself
 

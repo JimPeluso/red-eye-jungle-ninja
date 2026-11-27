@@ -355,6 +355,9 @@ if (local && /[?&]test\b/.test(location.search))
     get waves() {
       return waves;
     },
+    get zones() {
+      return zones;
+    },
     key,
     tch,
     gp,
