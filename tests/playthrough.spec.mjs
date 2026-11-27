@@ -122,8 +122,11 @@ test("the engine agrees with the model's widest gap", async ({ page }) => {
         }
       return false;
     }, lvl(gap));
-  expect(await engineCrosses(widest), `the engine can jump the ${widest}px gap the model says is the widest`).toBe(true);
-  expect(await engineCrosses(widest + 4), `the engine can't jump ${widest + 4}px, which the model says is too wide`).toBe(
-    false,
+  expect(await engineCrosses(widest), `the engine can jump the ${widest}px gap the model says is the widest`).toBe(
+    true,
   );
+  expect(
+    await engineCrosses(widest + 4),
+    `the engine can't jump ${widest + 4}px, which the model says is too wide`,
+  ).toBe(false);
 });

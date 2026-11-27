@@ -9,10 +9,14 @@ test('no two game files declare the same top-level name (that would blank the ga
   const seen = {};
   const dupes = [];
   for (const f of readdirSync(path.join(root, 'js')).filter(f => f.endsWith('.js'))) {
-    const ast = espree.parse(readFileSync(path.join(root, 'js', f), 'utf8'), { ecmaVersion: 2022, sourceType: 'script' });
+    const ast = espree.parse(readFileSync(path.join(root, 'js', f), 'utf8'), {
+      ecmaVersion: 2022,
+      sourceType: 'script',
+    });
     const names = [];
     for (const n of ast.body) {
-      if (n.type === 'VariableDeclaration') n.declarations.forEach(d => d.id.type === 'Identifier' && names.push(d.id.name));
+      if (n.type === 'VariableDeclaration')
+        n.declarations.forEach(d => d.id.type === 'Identifier' && names.push(d.id.name));
       else if (n.id) names.push(n.id.name);
     }
     for (const name of names) {
@@ -21,6 +25,15 @@ test('no two game files declare the same top-level name (that would blank the ga
     }
   }
   expect(dupes).toEqual([]);
+});
+
+test('the title screen shows, and Play starts Level 1', async ({ page }, testInfo) => {
+  await openGame(page);
+  await expect(page.locator('#title')).toBeVisible();
+  await expect(page.locator('.logo')).toHaveText('Red Eye');
+  await shot(page, testInfo, 'title');
+  await page.locator('#goT').click();
+  expect(await page.evaluate(() => [__t.mode, __t.li])).toEqual(['play', 0]);
 });
 
 test('Rock Snake: hidden it just clangs, once it pops out it can be beaten', async ({ page }) => {

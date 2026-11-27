@@ -42,7 +42,14 @@ function merge(list) {
 function subtract(list, cuts) {
   let out = list;
   for (const [a, b] of cuts)
-    out = out.flatMap(([l, r]) => (b <= l || a >= r ? [[l, r]] : [[l, Math.min(r, a)], [Math.max(l, b), r]]));
+    out = out.flatMap(([l, r]) =>
+      b <= l || a >= r
+        ? [[l, r]]
+        : [
+            [l, Math.min(r, a)],
+            [Math.max(l, b), r],
+          ],
+    );
   return merge(out);
 }
 /** The widest part of [l, r] not inside any of the `taken` ranges, or null. */
@@ -65,10 +72,29 @@ const runIdx = avail => {
 };
 
 export function surfacesOf(L, GY) {
-  const S = L.segs.map((s, i) => ({ id: `ground ${i + 1}`, kind: 'ground', ref: i, x0: s[0], x1: s[1], w: s[1] - s[0], y: GY }));
+  const S = L.segs.map((s, i) => ({
+    id: `ground ${i + 1}`,
+    kind: 'ground',
+    ref: i,
+    x0: s[0],
+    x1: s[1],
+    w: s[1] - s[0],
+    y: GY,
+  }));
   L.plats.forEach((q, i) => {
     const moving = !!(q[3] || q[4]);
-    S.push({ id: `log ${i + 1}`, kind: 'log', ref: i, q, moving, x0: q[0], x1: q[0] + q[2], w: q[2], y: q[1], period: q[5] || 240 });
+    S.push({
+      id: `log ${i + 1}`,
+      kind: 'log',
+      ref: i,
+      q,
+      moving,
+      x0: q[0],
+      x1: q[0] + q[2],
+      w: q[2],
+      y: q[1],
+      period: q[5] || 240,
+    });
   });
   return S;
 }
@@ -124,7 +150,11 @@ export function analyseLevel(L, prof, GY, { maxWitnesses = 16 } = {}) {
       free = merge((free || [[pl, ph]]).map(([l, r]) => [Math.max(l - VMAX, pl), Math.min(r + VMAX, ph)]));
       // Below the ground line (step.js) Red Eye is pushed sideways out of any ground he overlaps, so those spots
       // are out. He isn't lost yet: a coyote jump can still lift him back up onto the far side.
-      if (F0 > GY + 4) free = subtract(free, L.segs.map(([s0, s1]) => [s0 - PW, s1]));
+      if (F0 > GY + 4)
+        free = subtract(
+          free,
+          L.segs.map(([s0, s1]) => [s0 - PW, s1]),
+        );
       if (!free.length) return;
       if (free[free.length - 1][1] > gateX) reachesGate[a] = true;
       for (const it of items)
@@ -145,7 +175,15 @@ export function analyseLevel(L, prof, GY, { maxWitnesses = 16 } = {}) {
             if (piece && (!best || piece[1] - piece[0] > best[1] - best[0])) best = piece;
           }
           if (best && b !== a)
-            addEdge(a, b, { ...how, k, T: (best[0] + best[1]) / 2, width: best[1] - best[0], h: V.h, c: V.c, ...extra });
+            addEdge(a, b, {
+              ...how,
+              k,
+              T: (best[0] + best[1]) / 2,
+              width: best[1] - best[0],
+              h: V.h,
+              c: V.c,
+              ...extra,
+            });
           return best;
         };
         for (let b = 0; b < S.length; b++) {
@@ -182,7 +220,8 @@ export function analyseLevel(L, prof, GY, { maxWitnesses = 16 } = {}) {
       if (xmax > gateX) reachesGate[a] = true;
       // walking along it
       for (const it of items)
-        if (Math.abs(it.y - (base.y - 28)) < it.ry && it.x > xmin + HALF - it.rx && it.x < xmax + HALF + it.rx) touched[a].add(it.id);
+        if (Math.abs(it.y - (base.y - 28)) < it.ry && it.x > xmin + HALF - it.rx && it.x < xmax + HALF + it.rx)
+          touched[a].add(it.id);
       // jumping from anywhere on it, with the longest run-up available each way
       const xs = [];
       for (let X = xmin; X < xmax; X += 6) xs.push(X);
@@ -192,29 +231,56 @@ export function analyseLevel(L, prof, GY, { maxWitnesses = 16 } = {}) {
         const iL = runIdx(xmax - X);
         for (const V of jumps) {
           const how = { from: a, type: 'jump', X, rel: X - base.x, t0, iR, iL };
-          fly(a, X, base.y, t0, V, k => X - Xp[iL][k], k => X + Xp[iR][k], how);
+          fly(
+            a,
+            X,
+            base.y,
+            t0,
+            V,
+            k => X - Xp[iL][k],
+            k => X + Xp[iR][k],
+            how,
+          );
         }
       }
       // running off either end, then falling or a coyote jump
       const iAll = runIdx(xmax - xmin);
       if (RUNUPS[iAll] >= 2)
         for (const V of offs) {
-          fly(a, xmax, base.y, t0, V, k => xmax + Xm[1][k], k => xmax + Xp[iAll][k], {
-            from: a,
-            type: 'off-right',
-            X: xmax,
-            rel: xmax - base.x,
+          fly(
+            a,
+            xmax,
+            base.y,
             t0,
-            iR: iAll,
-          });
-          fly(a, xmin, base.y, t0, V, k => xmin - Xp[iAll][k], k => xmin - Xm[1][k], {
-            from: a,
-            type: 'off-left',
-            X: xmin,
-            rel: xmin - base.x,
+            V,
+            k => xmax + Xm[1][k],
+            k => xmax + Xp[iAll][k],
+            {
+              from: a,
+              type: 'off-right',
+              X: xmax,
+              rel: xmax - base.x,
+              t0,
+              iR: iAll,
+            },
+          );
+          fly(
+            a,
+            xmin,
+            base.y,
             t0,
-            iL: iAll,
-          });
+            V,
+            k => xmin - Xp[iAll][k],
+            k => xmin - Xm[1][k],
+            {
+              from: a,
+              type: 'off-left',
+              X: xmin,
+              rel: xmin - base.x,
+              t0,
+              iL: iAll,
+            },
+          );
         }
     }
   }
@@ -240,7 +306,7 @@ export function analyseLevel(L, prof, GY, { maxWitnesses = 16 } = {}) {
   // Where can he get to from the start? From where can he still reach the boss gate?
   const start = S.findIndex(s => s.kind === 'ground' && 110 > s.x0 + LO && 110 < s.x1 + HI);
   const reach = new Set([start]);
-  for (const queue = [start]; queue.length; ) {
+  for (const queue = [start]; queue.length;) {
     const a = queue.shift();
     for (const b of Object.keys(graph[a]).map(Number))
       if (!reach.has(b)) {
@@ -249,7 +315,7 @@ export function analyseLevel(L, prof, GY, { maxWitnesses = 16 } = {}) {
       }
   }
   const toGate = new Set(S.map((_, i) => i).filter(i => reachesGate[i]));
-  for (let grew = true; grew; ) {
+  for (let grew = true; grew;) {
     grew = false;
     for (let a = 0; a < S.length; a++)
       if (!toGate.has(a) && Object.keys(graph[a]).some(b => toGate.has(Number(b)))) {
@@ -259,7 +325,7 @@ export function analyseLevel(L, prof, GY, { maxWitnesses = 16 } = {}) {
   }
   // distance (in hops) to the gate, for the bot's route
   const dist = S.map((_, i) => (reachesGate[i] ? 0 : Infinity));
-  for (let changed = true; changed; ) {
+  for (let changed = true; changed;) {
     changed = false;
     for (let a = 0; a < S.length; a++)
       for (const b of Object.keys(graph[a]).map(Number))
@@ -273,8 +339,7 @@ export function analyseLevel(L, prof, GY, { maxWitnesses = 16 } = {}) {
   for (const a of reach) for (const id of touched[a]) got.add(id);
   const missed = items.filter(it => !got.has(it.id));
 
-  const standOn = (x, y) =>
-    S.findIndex(s => !s.moving && Math.abs(s.y - y) < 1 && x > s.x0 + LO && x < s.x1 + HI);
+  const standOn = (x, y) => S.findIndex(s => !s.moving && Math.abs(s.y - y) < 1 && x > s.x0 + LO && x < s.x1 + HI);
   const lanterns = L.lant.map(([x, y], i) => {
     const s = standOn(x, y);
     return { i, x, y, surface: s, ok: s >= 0 && reach.has(s) && toGate.has(s) };
@@ -286,7 +351,10 @@ export function analyseLevel(L, prof, GY, { maxWitnesses = 16 } = {}) {
     const lo = Math.min(a, x);
     const hi = Math.max(b, x);
     const on = S.some(s => !s.moving && Math.abs(s.y - y) < 1 && s.x0 <= lo && hi <= s.x1);
-    if (!on) snakeProblems.push(`snake ${i + 1} (kind ${kind}) at x=${x} patrols ${a}-${b} at y=${y}, not on one piece of ground or log`);
+    if (!on)
+      snakeProblems.push(
+        `snake ${i + 1} (kind ${kind}) at x=${x} patrols ${a}-${b} at y=${y}, not on one piece of ground or log`,
+      );
   });
 
   return {

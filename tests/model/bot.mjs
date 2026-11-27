@@ -36,12 +36,43 @@ export function botInstall() {
   };
   const save = () =>
     structuredClone({
-      p, B, bolts, flash, suReq, clones, cloneT, clReq, coins, snakes, stars, waves, spits, items, parts, pops, lit,
-      pouches, mode, T, cam, shake, jb, swReq, stReq, BN, LT, li, bk, boss, key: { ...key }, rng: window.__rng?.s,
+      p,
+      B,
+      bolts,
+      flash,
+      suReq,
+      clones,
+      cloneT,
+      clReq,
+      coins,
+      snakes,
+      stars,
+      waves,
+      spits,
+      items,
+      parts,
+      pops,
+      lit,
+      pouches,
+      mode,
+      T,
+      cam,
+      shake,
+      jb,
+      swReq,
+      stReq,
+      BN,
+      LT,
+      li,
+      bk,
+      boss,
+      key: { ...key },
+      rng: window.__rng?.s,
     });
   const restore = s0 => {
     const s = structuredClone(s0);
-    ({ p, B, bolts, flash, suReq, clones, cloneT, clReq, coins, snakes, stars, waves, spits, items, parts, pops, lit } = s);
+    ({ p, B, bolts, flash, suReq, clones, cloneT, clReq, coins, snakes, stars, waves, spits, items, parts, pops, lit } =
+      s);
     ({ pouches, mode, T, cam, shake, jb, swReq, stReq, BN, LT, li, bk, boss } = s);
     for (const k in key) key[k] = 0;
     Object.assign(key, s.key);
@@ -114,7 +145,7 @@ export function botInstall() {
     if (PA && w.t0 != null) wait = w.t0 - (LT + runF + 1);
     else if (PB && w.phi != null) wait = w.phi - w.k - (LT + runF + 1);
     const P = PA || PB;
-    if (P) wait = (((Math.round(wait + offset) % P) + P) % P);
+    if (P) wait = ((Math.round(wait + offset) % P) + P) % P;
     else wait = Math.max(0, offset);
     key.L = key.R = 0;
     for (let i = 0; i < wait; i++) {
