@@ -237,6 +237,7 @@ function levelClear() {
   g.textContent = last ? 'Face the Spike King' : 'Next level';
   g.classList.toggle('purple', last);
   go('win');
+  saveGame({ next: true });
 }
 function nextFromWin() {
   if (li >= LEVELS.length - 1) startBoss(BOSSES.findIndex(b => b.final));
@@ -247,4 +248,5 @@ function champ() {
   $('cH').textContent = p.hearts + ' of 6';
   $('cT').textContent = fmt(p.time);
   go('champ');
+  clearSave(); // the whole game is beaten: next time starts fresh
 }

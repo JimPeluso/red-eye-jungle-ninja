@@ -88,6 +88,7 @@ There's **no build step**.
 | `tests/smoke.spec.mjs` | Quick checks: the Rock Snake, every level and boss starts, level flow (Master Fang → Level 11, final boss → "You beat the game!"), no two files declare the same top-level name. |
 | `tests/levels.spec.mjs` | The **level model** (below), one test per level: the boss gate can be reached, no dead ends, every coin, pouch and heart can be collected, checkpoints are safe, no snake patrols over a pit, sign text fits, builder rules. |
 | `tests/playthrough.spec.mjs` | A **bot** plays the real game from the title to "You beat the game!" and beats every boss with real hits. It also checks the model against the engine: both say the widest jumpable gap is 244px. |
+| `tests/save.spec.mjs` | Save and Continue: the checkpoint round trip, next level after a clear, leaving mid-boss, New game, beating the game clears the save, broken and tampered saves. |
 | `tests/ui.spec.mjs` | Every key; the iPad touch pads (no dead spots, sliding never sneaks, one-thumb sneak-walk, Sword-to-Jump roll and jump attack, touch timing help); the game controller (a pretend one); pause, saving, tampered saves, Game Over → Try again, the HUD, the boss-defeat regression, and security (no outside requests, no CSP violations, no test hook on the live site). |
 
 - Every test fails on any page error or failed file load.
@@ -133,6 +134,7 @@ Rules that follow from that:
 | `js/bosses.js` | `BOSSES`: every giant cobra |
 | `js/scenery.js` | Coins (Level 1 hand-placed in `CO`, others via `autoCoins`), seeded background scenery, `load(level)` |
 | `js/state.js` | Game state variables, helpers (`hit`, `rnd`, `pp`), `mkSnake`, `newPlayer`, `startLevel`, `startBoss`, `go(mode)`, banners, unlocks |
+| `js/save.js` | Save and Continue: `saveGame`, `readSave` (checks every saved value), `continueGame`, `clearSave`, `showContinue` (the title screen buttons) |
 | `js/effects.js` | Particles (`puff`, `dust`, `sparkle`) and pop-up text (`pop`) |
 | `js/sound.js` | All sound effects (`sfx.*`), synthesised with Web Audio. There are no sound files. |
 | `js/enemies.js` | `ebox` (hit boxes), `moveSnake` (behaviour per kind), `hitEnemy`, `kill`, `gain` (super meter) |
@@ -145,7 +147,7 @@ Rules that follow from that:
 | `js/draw-ninjas.js` | `fig()` (any ninja), `ninja()` (Red Eye), `fang()`, plus dormant evil-ninja and duel drawing |
 | `js/draw-boss.js` | The giant cobra body and head, temple walls and torches |
 | `js/render.js` | Lightning bolts, health bars, shock waves, grass, then `world()` and `render()` |
-| `js/main.js` | `resize`, `hud`, the main loop, keyboard and touch controls, buttons, start-up, the `?test` hook |
+| `js/main.js` | `resize`, `hud`, the main loop, keyboard, touch and game-controller input, buttons, start-up, the `?test` hook |
 
 **Coordinates and camera**
 - The world is 580 units tall, and the top of the ground is `GY=460`. The canvas is scaled by `sc` to fit the screen.
@@ -164,8 +166,14 @@ Rules that follow from that:
 
 **Saved data** (in `localStorage`, always wrapped in try/catch)
 - `redeye-unlock` is the highest unlocked level index; `redeye-mute` is the sound setting.
+- `redeye-save` is the game in progress (`js/save.js`), so the title screen can offer **Continue**.
+  - **When it saves:** a level starts; a lantern checkpoint lights; a boss fight starts; a level is cleared (the save then points at the next level's start); the player leaves the app.
+  - **What it keeps:** the level, the last checkpoint, hearts, coins, stars, super meter, time, kills and sneak attacks, which snakes are beaten, and which coins, pouches and hearts were taken.
+  - **Continue** goes back to the last checkpoint, or the start of a boss fight. Beaten snakes stay beaten, like "Try again" after a Game Over.
+  - **New game** starts over and keeps unlocked levels. **Beating the game** clears the save.
+  - If a level's snakes, coins or lanterns change, old saves skip the "beaten / taken" lists for that level but keep the rest. A breaking change to the format needs a new `v` number.
 - Saves are per web address. The game used to live at a claude.ai artifact link, so unlocks didn't carry over to GitHub Pages.
-- Saved values are untrusted (anyone can edit them in their browser): `unlocked()` clamps them, and `tests/ui.spec.mjs` checks tampered values.
+- Saved values are untrusted (anyone can edit them in their browser): `unlocked()` and `readSave()` check and clamp them, and `tests/ui.spec.mjs` and `tests/save.spec.mjs` check tampered values.
 
 The old claude.ai artifact link is frozen at version 38. Its snapshot/restore code (`window.claude.hot`) was removed from this repo on November 27, 2026.
 

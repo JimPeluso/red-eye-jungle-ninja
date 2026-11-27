@@ -108,7 +108,8 @@ function resume() {
   go('play');
 }
 function primary() {
-  if (mode === 'title' || mode === 'champ') newGame();
+  if (mode === 'title' && readSave()) continueGame();
+  else if (mode === 'title' || mode === 'champ') newGame();
   else if (mode === 'win') nextFromWin();
   else if (mode === 'over') retry();
   else if (mode === 'paused') resume();
@@ -281,9 +282,12 @@ document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     releaseAll();
     pause();
+    if (mode !== 'win') saveGame(); // on the win screen the save already points at the next level
   }
 });
 $('goT').onclick = newGame;
+$('goCont').onclick = continueGame;
+$('goN').onclick = newGame;
 document.querySelectorAll('.chip').forEach(c =>
   c.addEventListener('click', () => {
     if (c.disabled) return;
@@ -335,6 +339,12 @@ if (local && /[?&]test\b/.test(location.search))
     },
     get li() {
       return li;
+    },
+    get lit() {
+      return lit;
+    },
+    get coins() {
+      return coins;
     },
     get LT() {
       return LT;

@@ -9,11 +9,14 @@ import { botInstall, planWitnesses } from './model/bot.mjs';
 const game = loadGameData();
 const { GY } = game;
 
+// Measures jumps in a separate browser context: measuring starts Level 1, which saves a game, and a save in the
+// main page's storage would turn its Play button into Continue.
 async function measured(page) {
-  const other = await page.context().newPage();
+  const ctx = await page.context().browser().newContext();
+  const other = await ctx.newPage();
   await openGame(other);
   const prof = await other.evaluate(measureInPage, { RUNUPS, HOLDS, COYOTE });
-  await other.close();
+  await ctx.close();
   return prof;
 }
 

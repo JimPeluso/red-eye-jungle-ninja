@@ -190,6 +190,7 @@ function startLevel(i) {
   hk = '';
   go('play');
   showBanner('Level ' + (i + 1), LEVELS[i].name, '', false);
+  saveGame();
 }
 function startBoss(n) {
   initAudio();
@@ -254,6 +255,7 @@ function startBoss(n) {
     true,
   );
   sfx.roar();
+  saveGame();
 }
 function toTitle() {
   p = null;
@@ -281,7 +283,10 @@ function go(m) {
   mode = m;
   document.body.dataset.mode = m;
   for (const id of ['title', 'over', 'win', 'paused', 'champ']) $(id).hidden = id !== m;
-  if (m === 'title') chips();
+  if (m === 'title') {
+    chips();
+    showContinue();
+  }
 }
 function showBanner(s, b, u, isBoss) {
   BN = { t: 140 };

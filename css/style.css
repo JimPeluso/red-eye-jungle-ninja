@@ -423,6 +423,15 @@ body:not([data-mode='play']) .pad,
   transform: translateY(4px);
   box-shadow: 0 2px 0 var(--redd);
 }
+.go.cont small {
+  display: block;
+  margin-top: 6px;
+  font:
+    800 15px/1.2 'Nunito',
+    system-ui,
+    sans-serif;
+  opacity: 0.92;
+}
 .go.purple {
   background: #7b4ccc;
   box-shadow:

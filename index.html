@@ -179,7 +179,11 @@
           <h1 class="logo">Red Eye</h1>
           <p class="sub">Jungle Ninja</p>
           <p class="lvl">23 levels, Master Fang and the Spike King</p>
-          <div><button class="go" id="goT">Play</button></div>
+          <div>
+            <button class="go" id="goT">Play</button>
+            <button class="go cont" id="goCont" hidden>Continue<small id="contInfo"></small></button>
+          </div>
+          <div><button class="link" id="goN" hidden>New game</button></div>
           <p class="chiplab">Pick a level you have unlocked</p>
           <div class="chips" id="chips">
             <button class="chip" data-i="0">1</button><button class="chip" data-i="1">2</button
@@ -278,6 +282,7 @@
     <script src="js/bosses.js"></script>
     <script src="js/scenery.js"></script>
     <script src="js/state.js"></script>
+    <script src="js/save.js"></script>
     <script src="js/effects.js"></script>
     <script src="js/sound.js"></script>
     <script src="js/enemies.js"></script>
