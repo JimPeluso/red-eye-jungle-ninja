@@ -24,7 +24,8 @@ function step(){
  p.x+=p.vx;if(p.x<0){p.x=0;p.vx=0}if(p.x>END+200)p.x=END+200;
  if(boss){/* the cobra's neck blocks the way, but only near the ground; a lunge that catches you is a hit, not a bulldozer */
   let wall=ARENA-20,soft=false;
-  if(B&&!B.cfg.duel&&B.st!=='defeat'&&p.y+p.h>B.hy-40){const w=B.hx+62;
+  if(B&&B.ug){if(760<wall){wall=760;soft=true}}/* burrowing: no neck to block, just keep Red Eye out of the far corner */
+  else if(B&&!B.cfg.duel&&B.st!=='defeat'&&p.y+p.h>B.hy-40){const w=B.hx+62;
    if(B.st==='lunge'&&p.x+p.w>w&&p.inv<=0&&!p.dead){hurt({x:p.x+40});p.vx=-8}
    if(w<wall){wall=w;soft=B.st!=='lunge'}}
   if(p.x+p.w>wall){p.x=soft?Math.max(wall-p.w,p.x-6):wall-p.w;if(p.vx>0)p.vx=0}
@@ -82,7 +83,7 @@ function step(){
   waves=waves.filter(w=>w.life>0);
   if(b.cfg.duel){if(live)duelHits(swing,blade,pb,f0,cx)}
   else if(live){
-   const fb=b.cfg.rider?{x:b.hx-12,y:b.hy-40-74,w:36,h:74}:{x:-1e4,y:0,w:0,h:0},hb={x:b.hx-42,y:b.hy-30,w:74,h:52},stuck=b.st==='stuck';
+   const fb=b.cfg.rider?{x:b.hx-12,y:b.hy-40-74,w:36,h:74}:{x:-1e4,y:0,w:0,h:0},hb={x:b.hx-42,y:b.hy-30,w:74,h:52},stuck=b.st==='stuck'||b.st==='dazed';
    if(swing&&b.inv<=0&&(hit(blade,fb)||(stuck&&hit(blade,hb))))bossHit(2);
    for(const st of stars){if(st.life<=0)continue;const sb={x:st.x-8,y:st.y-8,w:16,h:16};
     if(hit(sb,fb)){st.life=0;if(b.inv<=0)bossHit()}

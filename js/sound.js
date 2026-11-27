@@ -20,6 +20,7 @@ const sfx={
  empty:()=>tone(160,.08,'square',.04),
  win:()=>{[523,659,784,1047,784,1047].forEach((f,i)=>tone(f,i===5?.5:.14,'square',.05,0,i*.13))},
  roar:()=>{tone(130,.6,'sawtooth',.08,55);noise(.55,.18,260)},
+ rumble:()=>{noise(.35,.1,140);tone(55,.3,'sine',.06,40)},
  thud:()=>{tone(90,.25,'sine',.16,40);noise(.2,.2,200)},
  lunge:()=>noise(.25,.2,500),
  clang:()=>{tone(1400,.1,'square',.035);tone(2100,.18,'triangle',.04)},

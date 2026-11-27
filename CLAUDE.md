@@ -79,6 +79,7 @@ There's **no build step**.
 |---|---|
 | Level data | No pit has more than 220px with nothing to land on. Generated levels also obey the builder rules (section 4). Every gate is on ground, every boss and palette exists. |
 | Rock Snake | Clangs while hidden, pops out, can be beaten. |
+| Shadow's burrow | Goes underground, chases, bursts up, lies dazed, can be hit while dazed. |
 | Levels | Plays a few seconds of all 23. |
 | Bosses | Starts every boss a level uses. |
 | Level flow | Beating Master Fang leads to Level 11; beating the final boss shows the "You beat the game!" screen. |
@@ -214,7 +215,7 @@ Health 2.2 for the special kinds comes from his rule: "special snakes have 10% m
 
 | Field | Meaning |
 |---|---|
-| `atk` | Any of `'lunge'`, `'slam'`, `'spit'`, `'wave'` (ground shock wave), `'spikes'` (shoots spikes), `'summon'` (calls snakes) |
+| `atk` | Any of `'lunge'`, `'slam'`, `'spit'`, `'wave'` (ground shock wave), `'spikes'` (shoots spikes), `'summon'` (calls snakes), `'burrow'` (goes underground; see below) |
 | `minion` | Snake kind it summons (0–3) |
 | `col` | Colours: `o` outline, `a`/`b` body, `h` highlight, `m` hood markings, `bl` belly |
 | `rider` | Master Fang sits on its head (his own hit box, and he shouts "Snakes, attack!") |
@@ -232,7 +233,7 @@ The hood markings are a ring and a diamond. They once looked like a second pair 
 | 1 | Thunder | 2 | 35 |
 | 2 | Tide | 3 | 40 |
 | 3 | Ember | 4 | 45 |
-| 4 | Shadow | 5 | 50 |
+| 4 | Shadow (the one that **burrows**) | 5 | 50 |
 | 11 | Venom | 6 | 60 |
 | 8 | Magma | 7 | 55 |
 | 9 | Bog | 8 | 60 |
@@ -256,6 +257,15 @@ The hood markings are a ring and a diamond. They once looked like a second pair 
 
 Boss fight mechanics:
 - Every boss has a **phase 2** below half health: faster, more snakes.
+- **Burrow** (only Shadow has it, his idea: "cave snake can go underground"). The sequence:
+  1. `dive`: the cobra sinks into the ground.
+  2. `under`: a dirt mound, with the cobra's back poking out, chases Red Eye.
+  3. `rumble`: it stops under him with a "!" and red eyes in the crack. That's the warning to move.
+  4. `burst`: the head erupts out of a hole and hurts him if he's standing on it.
+  5. `dazed`: the head lies on the ground with stars, and **can be hit** like `stuck`.
+  6. `redive` and `rise`: it sinks back and comes up at its usual spot.
+
+  State lives on `B`: `ug` (underground), `sink` (0 to 1), `mx` (mound x), `hole` (x of the hole). The drawing is `underground()`, `burrowBack()`, `burrowNeck()` and `burrowFront()` in draw-boss.js, which clip the cobra at ground level. While `B.ug` is true there's no neck wall, only a soft wall at x=760. It's always picked as the second attack (so you see it early), then about 35% of the time. To give another boss the attack, add `'burrow'` to its `atk`.
 - The **lunge** counts as a hit with knockback. Its invisible "neck wall" only blocks near ground height and pushes gently (6px per frame). There used to be a bug where the wall dragged and pinned Red Eye during the lunge ("I freeze and get stuck"), so **don't bring back a hard wall**.
 
 ### Palettes (`js/palettes.js`)
@@ -331,6 +341,7 @@ If you change hearts, update `newPlayer()`, `retry()` and the "of 6" text in `ch
 - **23 levels**, each with its own world and giant cobra boss. They get harder as you go: tougher bosses, faster and more numerous snakes, wider gaps that always have something to land on.
 - **Level 10: Master Fang riding his giant spiked cobra.** It's a boss battle, not the final boss, and there's no sword duel and no throwing stars for Master Fang. He was made easier once already.
 - **Level 23: the Spike King** is the final boss. He has spikes and shoots spikes.
+- **Level 5: Shadow, the giant cave cobra, goes underground** and bursts up under Red Eye.
 - **Snakes are normal size** (`GS=1`). Giant snakes were tried and reverted.
 - **Cartoon art.** "Realistic" art was tried and fully reverted.
 - **No evil ninjas, no ice snakes or ice balls.** Removed by request; the code is dormant.

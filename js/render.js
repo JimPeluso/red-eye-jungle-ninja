@@ -15,7 +15,7 @@ function world(){
  const v0=cam-120,v1=cam+viewW+120,cx=p.x+p.w/2;
  for(let i=0;i<SEGS.length-1;i++){const a=SEGS[i][1],b=SEGS[i+1][0];if(b<v0||a>v1)continue;if(PAL.water||PAL.lava)water(Math.max(a,v0),Math.min(b,v1));else if(PAL.clouds)clouds(Math.max(a,v0),Math.min(b,v1));else{ctx.fillStyle=ABYSS;ctx.fillRect(a-4,GY-6,b-a+8,WH-GY+60)}}
  for(const s of SEGS)if(s[1]>v0&&s[0]<v1)ground(s,Math.max(s[0],v0),Math.min(s[1],v1));
- if(boss&&B){templeBack();if(!B.cfg.duel)cobraBody();templeFront()}
+ if(boss&&B){templeBack();if(B.ug)burrowBack();if(!B.cfg.duel)underground(B.ug&&B.hole!=null?burrowNeck:cobraBody);templeFront()}
  for(const q of PLATS){const m=q[3]||0;if(q[0]+q[2]+m<v0||q[0]-m>v1)continue;const o=pp(q,LT);log(o.x,o.y,q[2],!!(q[3]||q[4]))}
  for(const[x,a,b]of SIGNS)if(x>v0&&x<v1)sign(x,a,b);
  LANT.forEach((l,i)=>{if(l[0]>v0&&l[0]<v1)lantern(l[0],l[1],lit[i])});
@@ -24,7 +24,7 @@ function world(){
  for(const it of items)if(!it.got)heartItem(it);
  for(const c of coins)if(!c.got&&c.x>v0&&c.x<v1)coin(c);
  for(const s of snakes)if(s.alive&&s.x>v0-60&&s.x<v1+60){if(s.type>=4)evilNinja(s);else snake(s);if(s.hp<s.mhp&&!s.dy)hpBar(s)}
- if(boss&&B&&B.cfg.duel)duelFang();else if(boss&&B){if(B.st==='defeat'){cobraHead();if(B.cfg.rider)fang()}else{if(B.cfg.rider)fang();cobraHead()}}
+ if(boss&&B&&B.cfg.duel)duelFang();else if(boss&&B){if(B.st==='defeat'){cobraHead();if(B.cfg.rider)fang()}else{if(B.cfg.rider)fang();underground(cobraHead);if(B.ug)burrowFront()}}
  if(PAL.dark){const g=ctx.createRadialGradient(cx,p.y+28,6,cx,p.y+28,110);g.addColorStop(0,'rgba(255,236,190,.35)');g.addColorStop(1,'rgba(255,236,190,0)');ctx.fillStyle=g;ctx.fillRect(cx-110,p.y-82,220,220)}
  ninja();
  for(const c of clones)drawClone(c);
