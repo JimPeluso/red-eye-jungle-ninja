@@ -237,7 +237,7 @@ export function botInstall() {
       const b = B;
       key.L = key.R = key.J = 0;
       if (b.st !== 'defeat') {
-        const stuck = b.st === 'stuck';
+        const stuck = b.st === 'stuck' || b.st === 'dazed';
         const rider = !!b.cfg.rider;
         const tx = stuck ? b.hx - 82 : rider ? b.hx - 60 : 150;
         const err = tx - p.x;

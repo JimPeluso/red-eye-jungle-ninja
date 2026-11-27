@@ -126,7 +126,15 @@ export function analyseLevel(L, prof, GY, { maxWitnesses = 16 } = {}) {
   const edges = S.map(() => new Map());
   const touched = S.map(() => new Set());
   const reachesGate = S.map(() => false);
-  const phasesOf = B => range(32).map(i => (i * B.period) / 32);
+  // Each moving log's position at 32 moments of its swing, worked out once (fly() checks them every frame).
+  for (const B of S)
+    if (B.moving) {
+      B.amp = B.q[4] || 0;
+      B.samples = range(32).map(i => {
+        const phi = (i * B.period) / 32;
+        return { phi, ...pp(B.q, phi) };
+      });
+    }
 
   function addEdge(a, b, w) {
     let list = edges[a].get(b);
@@ -195,11 +203,17 @@ export function analyseLevel(L, prof, GY, { maxWitnesses = 16 } = {}) {
           } else {
             // A still surface lets Red Eye wait for any phase; from a moving log he can wait whole swings of it.
             // (Moving logs don't block other landings in the model: Red Eye can pick a moment they're elsewhere.)
-            const phis = t0 == null ? phasesOf(B) : range(12).map(m => t0 + m * A.period + k + 1);
-            for (const phi of phis) {
-              const o = pp(B.q, phi);
-              if (F0 <= o.y + 8 && F1 >= o.y && landOn(b, o.x + LO, o.x + B.w + HI, { phi })) break;
-            }
+            // Feet can only land if the log's height is within [F0 - 8, F1] this frame: skip it if it never is.
+            if (F1 < B.y - B.amp || F0 - 8 > B.y + B.amp) continue;
+            if (t0 == null) {
+              for (const o of B.samples)
+                if (F0 <= o.y + 8 && F1 >= o.y && landOn(b, o.x + LO, o.x + B.w + HI, { phi: o.phi })) break;
+            } else
+              for (let m = 0; m < 12; m++) {
+                const phi = t0 + m * A.period + k + 1;
+                const o = pp(B.q, phi);
+                if (F0 <= o.y + 8 && F1 >= o.y && landOn(b, o.x + LO, o.x + B.w + HI, { phi })) break;
+              }
           }
         }
         free = subtract(free, taken);

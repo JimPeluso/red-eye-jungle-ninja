@@ -203,7 +203,7 @@ function cobraHead() {
   ctx.moveTo(hx - 34, hy - 8);
   ctx.lineTo(hx - 14, hy - 4);
   ctx.stroke();
-  if (!open && b.st !== 'stuck' && b.tick % 90 < 16) {
+  if (!open && b.st !== 'stuck' && b.st !== 'dazed' && b.tick % 90 < 16) {
     ctx.strokeStyle = '#e8302a';
     ctx.lineWidth = 2.5;
     ctx.beginPath();
@@ -214,7 +214,7 @@ function cobraHead() {
     ctx.lineTo(hx - 60, hy + 16);
     ctx.stroke();
   }
-  if (b.st === 'stuck') {
+  if (b.st === 'stuck' || b.st === 'dazed') {
     ctx.fillStyle = '#ffe14d';
     for (let i = 0; i < 3; i++) {
       const a = b.tick * 0.12 + i * 2.094;

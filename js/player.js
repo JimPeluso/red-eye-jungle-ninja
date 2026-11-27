@@ -42,7 +42,7 @@ function cloneTarget(c) {
       best = { x: s.x, y: s.y, s };
     }
   }
-  if (boss && B && B.st === 'stuck' && !B.cfg.duel && Math.abs(B.hx - c.x) < bd + 100)
+  if (boss && B && (B.st === 'stuck' || B.st === 'dazed') && !B.cfg.duel && Math.abs(B.hx - c.x) < bd + 100)
     best = { x: B.hx - 20, y: GY, boss: true };
   return best;
 }
@@ -139,6 +139,7 @@ function doSuper() {
   for (const v of spits) sparkle(v.x, v.y);
   spits = [];
   waves = [];
+  zones = [];
   bolts.push({ x: p.x + 17, y: p.y - 34, life: 24 });
   p.sp = 0;
   pop(p.x + 17, p.y - 44, 'THUNDER STRIKE!', '#fff59d');

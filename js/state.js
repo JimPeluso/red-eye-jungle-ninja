@@ -13,6 +13,7 @@ let p = null,
   snakes,
   stars,
   waves,
+  zones,
   spits,
   items,
   parts,
@@ -140,6 +141,7 @@ function newPlayer() {
 function clearFx() {
   stars = [];
   waves = [];
+  zones = [];
   spits = [];
   items = [];
   parts = [];

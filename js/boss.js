@@ -7,6 +7,11 @@ function pickAttack() {
     small = snakes.filter(s => s.alive).length,
     r = Math.random();
   b.count++;
+  if (b.phase === 2 && b.cfg.mad && --b.madIn <= 0) {
+    b.madIn = MAD_EVERY;
+    startMad(b);
+    return;
+  }
   if (A.includes('summon') && small < (b.phase === 2 ? 3 : 2) && r < 0.24 && b.count > 1) {
     b.st = 'summon';
     b.t = 46;
@@ -75,13 +80,15 @@ function bossHit(d) {
       }
     waves = [];
     spits = [];
+    zones = [];
     pop(b.hx, b.hy - 160, b.cfg.rider ? 'Nooo!' : b.cfg.duel ? 'Argh!' : b.cfg.name + ' is beaten!', '#ffc928');
     sfx.win();
     return;
   }
   if (b.phase === 1 && b.hp <= b.max / 2) {
     b.phase = 2;
-    pop(b.hx, b.hy - 160, b.cfg.name + ' is angry!', '#ff6b5e');
+    if (b.cfg.mad) getMad(b);
+    else pop(b.hx, b.hy - 160, b.cfg.name + ' is angry!', '#ff6b5e');
     sfx.roar();
     if (p.hearts < 6) items.push({ x: 170, y: GY - 30, dy: -400, vy: 0, got: false });
   }
@@ -141,6 +148,12 @@ function bossStep() {
         b.t = 40;
         b.to = Math.min(700, b.hx + 260);
       }
+      break;
+    case 'mad':
+      madStep(b, rest);
+      break;
+    case 'dazed':
+      dazedStep(b);
       break;
     case 'recover':
       b.hx += (b.to - b.hx) * 0.08;

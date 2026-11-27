@@ -340,12 +340,13 @@ function step() {
       if (p.inv <= 0 && !p.dead && hit(pb, wb)) hurt(w);
     }
     waves = waves.filter(w => w.life > 0);
+    stepZones(pb);
     if (b.cfg.duel) {
       if (live) duelHits(swing, blade, pb, f0, cx);
     } else if (live) {
       const fb = b.cfg.rider ? { x: b.hx - 12, y: b.hy - 40 - 74, w: 36, h: 74 } : { x: -1e4, y: 0, w: 0, h: 0 },
         hb = { x: b.hx - 42, y: b.hy - 30, w: 74, h: 52 },
-        stuck = b.st === 'stuck';
+        stuck = b.st === 'stuck' || b.st === 'dazed';
       if (swing && b.inv <= 0 && (hit(blade, fb) || (stuck && hit(blade, hb)))) bossHit(2);
       for (const st of stars) {
         if (st.life <= 0) continue;
