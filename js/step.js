@@ -94,7 +94,13 @@ function step() {
     /* the cobra's neck blocks the way, but only near the ground; a lunge that catches you is a hit, not a bulldozer */
     let wall = ARENA - 20,
       soft = false;
-    if (B && !B.cfg.duel && B.st !== 'defeat' && p.y + p.h > B.hy - 40) {
+    if (B && B.ug) {
+      if (760 < wall) {
+        wall = 760;
+        soft = true;
+      }
+    } /* burrowing: no neck to block, just keep Red Eye out of the far corner */
+    else if (B && !B.cfg.duel && B.st !== 'defeat' && p.y + p.h > B.hy - 40) {
       const w = B.hx + 62;
       if (B.st === 'lunge' && p.x + p.w > w && p.inv <= 0 && !p.dead) {
         hurt({ x: p.x + 40 });
@@ -330,11 +336,17 @@ function step() {
     const b = B,
       live = b.st !== 'intro' && b.st !== 'defeat';
     for (const w of waves) {
+      if (w.big && w.warn > 0) {
+        // Tide's Tidal Wave: the water rises behind Tide first (the warning), then it rolls
+        w.warn--;
+        w.h = 95 * (1 - w.warn / MAD_WARN);
+        continue;
+      }
       w.x += w.vx;
       w.life--;
       if (w.x < -60) w.life = 0;
-      const wb = { x: w.x - 14, y: GY - 46, w: 28, h: 46 };
-      if (swing && hit(blade, wb)) {
+      const wb = w.big ? { x: w.x - 30, y: GY - w.h, w: 64, h: w.h } : { x: w.x - 14, y: GY - 46, w: 28, h: 46 };
+      if (!w.big && swing && hit(blade, wb)) {
         w.life = 0;
         pop(w.x, GY - 70, 'Blocked!', '#bfefff');
         sparkle(w.x, GY - 24);

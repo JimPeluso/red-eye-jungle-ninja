@@ -119,7 +119,7 @@ function cobraHead() {
     hx = b.hx,
     hy = b.hy,
     mad = b.phase === 2 || b.st === 'windup' || b.st === 'lunge',
-    open = b.st === 'windup' || b.st === 'lunge' || b.st === 'spit' || b.st === 'spikes';
+    open = b.st === 'windup' || b.st === 'lunge' || b.st === 'spit' || b.st === 'spikes' || b.st === 'burst';
   ctx.save();
   if (b.inv > 0 && (b.inv >> 2) % 2) ctx.globalAlpha = 0.55;
   const shk = b.st === 'windup' ? Math.sin(b.tick * 1.3) * 2 : 0;
@@ -222,4 +222,104 @@ function cobraHead() {
     }
   }
   ctx.restore();
+}
+/* Shadow's burrow attack. underground(fn) draws the cobra cut off at ground level: sunk by b.sink while diving or rising,
+   or as a neck coming out of the hole at b.hole after it bursts up. */
+function underground(fn) {
+  const b = B;
+  if (!b || !b.ug) {
+    fn();
+    return;
+  }
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(cam - 400, TOP - 400, viewW + 800, GY + 3 - (TOP - 400));
+  ctx.clip();
+  if (b.hole == null) ctx.translate(0, b.sink * 240);
+  fn();
+  ctx.restore();
+}
+function burrowNeck() {
+  const b = B,
+    C = b.col,
+    x = b.hole + 14,
+    pts = [];
+  for (let y = GY + 40; y > b.hy + 18; y -= 15) pts.push([x + Math.sin(y * 0.06 + b.tick * 0.1) * 3, y, 23]);
+  ctx.fillStyle = C.o;
+  for (const [px, py, r] of pts) circle(px, py, r + 3);
+  pts.forEach(([px, py, r], j) => {
+    ctx.fillStyle = j % 2 ? C.a : C.b;
+    circle(px, py, r);
+  });
+  ctx.fillStyle = C.bl;
+  for (const [px, py, r] of pts) circle(px - r * 0.45, py, r * 0.42);
+}
+function burrowBack() {
+  const b = B;
+  if (b.st === 'under' || b.st === 'rumble') {
+    const rm = b.st === 'rumble',
+      x = b.mx + (rm ? Math.sin(b.tick * 1.9) * 3 : 0),
+      h = rm ? 17 : 13,
+      C = b.col;
+    if (!rm) {
+      const bob = Math.sin(b.tick * 0.25) * 3;
+      ctx.fillStyle = C.o;
+      ell(x + 6, GY - h + 2 + bob, 27, 15);
+      ctx.fillStyle = C.b;
+      ell(x + 6, GY - h + 2 + bob, 24, 12);
+      ctx.fillStyle = C.m;
+      ctx.beginPath();
+      ctx.moveTo(x + 6, GY - h - 9 + bob);
+      ctx.lineTo(x + 12, GY - h - 2 + bob);
+      ctx.lineTo(x + 6, GY - h + 5 + bob);
+      ctx.lineTo(x, GY - h - 2 + bob);
+      ctx.fill();
+    }
+    ctx.fillStyle = '#4a3a2a';
+    ell(x, GY + 3, 52, h + 4);
+    ctx.fillStyle = '#8a7254';
+    ell(x - 20, GY, 22, h - 2);
+    ell(x + 24, GY + 1, 20, h - 4);
+    ctx.fillStyle = '#b49a74';
+    ell(x - 24, GY - h * 0.45, 10, 3);
+    ell(x + 20, GY - h * 0.35, 8, 2.5);
+    ctx.fillStyle = '#6a5640';
+    circle(x - 40, GY - 2, 4.5);
+    circle(x + 44, GY - 1, 4);
+    circle(x - 6, GY - 3, 3);
+    if (rm) {
+      ctx.fillStyle = '#8a7254';
+      ell(x, GY - 2, 30, h - 3);
+      ctx.strokeStyle = '#14110f';
+      ctx.lineWidth = 2.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x - 16, GY - h + 4);
+      ctx.lineTo(x - 4, GY - 4);
+      ctx.lineTo(x + 8, GY - h + 2);
+      ctx.lineTo(x + 18, GY - 3);
+      ctx.stroke();
+      ctx.fillStyle = '#14110f';
+      ell(x, GY - 6, 14, 4.5);
+      ctx.fillStyle = '#ff3b30';
+      circle(x - 5, GY - 6, 2.6);
+      circle(x + 5, GY - 6, 2.6);
+    }
+  }
+  if (b.hole != null) {
+    ctx.fillStyle = '#4a3a2a';
+    ell(b.hole, GY + 1, 60, 15);
+    ctx.fillStyle = '#0d0806';
+    ell(b.hole, GY + 2, 48, 10);
+  }
+}
+function burrowFront() {
+  const b = B;
+  if (b.hole == null) return;
+  ctx.fillStyle = '#8a7254';
+  ell(b.hole - 44, GY + 2, 16, 7);
+  ell(b.hole + 46, GY + 3, 14, 6);
+  ctx.fillStyle = '#6a5640';
+  circle(b.hole - 60, GY - 1, 4.5);
+  circle(b.hole + 62, GY, 4);
 }

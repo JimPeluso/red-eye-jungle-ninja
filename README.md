@@ -45,7 +45,15 @@ On the iPad you can slide your thumb from one button to the next without lifting
 - **Shield Snake:** its shield blocks your sword. Jump over it and hit its back.
 - **Ghost Snake:** fades in and out. Hit it while it's solid.
 
-When a boss gets mad (half health), it can have its own special move. Watch out for Moss's **Vine Grab**!
+When a boss gets mad (half health), it has its own special move. Watch for the warning, then get out of the way:
+
+- **Moss: Vine Grab.** Step off the rustling leaves.
+- **Thunder: Lightning Call.** Get out of the glowing circles.
+- **Tide: Tidal Wave.** Jump over the wave, or hop on a log.
+- **Ember: Fire Rain.** Stay out of the shadows.
+- **Shadow: Cave-in.** Stay out of the shadows (there are more of them).
+
+After its move the boss is dizzy for a moment. That's your chance to hit it!
 
 ## Run it yourself
 

@@ -101,6 +101,10 @@ const sfx = {
     tone(130, 0.6, 'sawtooth', 0.08, 55);
     noise(0.55, 0.18, 260);
   },
+  rumble: () => {
+    noise(0.35, 0.1, 140);
+    tone(55, 0.3, 'sine', 0.06, 40);
+  },
   thud: () => {
     tone(90, 0.25, 'sine', 0.16, 40);
     noise(0.2, 0.2, 200);
@@ -112,6 +116,11 @@ const sfx = {
   },
   whoosh: () => noise(0.3, 0.18, 900),
   rustle: () => noise(0.5, 0.1, 1500),
+  crackle: () => noise(0.6, 0.08, 3500),
+  zap: () => {
+    noise(0.2, 0.25, 2500);
+    tone(900, 0.12, 'square', 0.05, 200);
+  },
   boing: () => tone(160, 0.3, 'sine', 0.07, 520),
   bossHit: () => {
     tone(520, 0.12, 'square', 0.06, 200);
