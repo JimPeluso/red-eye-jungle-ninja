@@ -1,4 +1,5 @@
 /* Drawing the giant cobra boss and its temple. */
+'use strict';
 /* ---------- the giant cobra and its temple ---------- */
 function wall(xa,xb,cap){ctx.fillStyle='#6f7d76';ctx.fillRect(xa,GY-250,xb-xa,252);ctx.strokeStyle='rgba(20,30,26,.28)';ctx.lineWidth=2;ctx.beginPath();
  for(let r=0;r<6;r++){const y=GY-250+r*42;ctx.moveTo(xa,y);ctx.lineTo(xb,y);for(let x=880+(r%2?35:0);x<xb;x+=70)if(x>xa){ctx.moveTo(x,y);ctx.lineTo(x,y+42)}}ctx.stroke();

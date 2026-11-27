@@ -1,4 +1,5 @@
 /* Drawing ninjas: Red Eye (fig/ninja), Master Fang, and the old evil ninjas. */
+'use strict';
 /* a ninja: Red Eye, Master Fang, or one of Fang's clan */
 function fig(o){
  const cr=o.crouch,ink=o.ink,acc=o.acc;

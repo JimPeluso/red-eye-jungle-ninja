@@ -1,4 +1,5 @@
 /* Colour palettes for every world (PALS). Levels and boss arenas pick one by name. */
+'use strict';
 /* ---------- looks for each world ---------- */
 const JUNGLE={sky:['#0f5f5a','#45a87e','#bfe28e','#e6ef9c'],sun:'255,248,196',sunA:.75,hA:'#9ad7ad',tB:'#5aae84',tC:['#25744c','#2e8a59','#3a9c66','#1d6040'],hC:'#2f855a',mist:'225,248,215',can:['#14523a','#0c3a26'],vine:['#0d4a2e','#14653c'],lip:['#2c9a3f','#4cc75a','#8fe874'],dirt:['#7a4a26','#62391b','#93603a'],log:['#8a5a2e','#6a4220','#4cc75a']};
 const PALS={

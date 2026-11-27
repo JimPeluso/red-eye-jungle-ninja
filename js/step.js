@@ -1,4 +1,5 @@
 /* One game tick: input, Red Eye physics, collisions, enemies, items, camera. */
+'use strict';
 /* ---------- one game tick ---------- */
 function step(){
  T++;

@@ -1,4 +1,5 @@
 /* Particles and pop-up text. */
+'use strict';
 /* ---------- effects ---------- */
 function puff(x,y,c,n){for(let i=0;i<n;i++)parts.push({x,y,vx:rnd(-3,3),vy:rnd(-4,1),g:.15,life:rnd(20,34),max:34,r:rnd(3,7),c})}
 function dust(x,y,n){for(let i=0;i<n;i++)parts.push({x:x+rnd(-10,10),y,vx:rnd(-1.5,1.5),vy:rnd(-1.8,-.4),g:.04,life:rnd(14,24),max:24,r:rnd(2,4),c:'rgba(240,230,200,.8)'})}

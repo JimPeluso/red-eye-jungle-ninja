@@ -1,4 +1,5 @@
 /* Giant cobra boss AI: picking attacks, summoning snakes, taking hits, the state machine. */
+'use strict';
 /* ---------- boss AI: every giant cobra, including Master Fang's ---------- */
 function pickAttack(){const b=B,A=b.cfg.atk,small=snakes.filter(s=>s.alive).length,r=Math.random();b.count++;
  if(A.includes('summon')&&small<(b.phase===2?3:2)&&r<.24&&b.count>1){b.st='summon';b.t=46;b.raise=b.cfg.rider?1:0;sfx.roar();pop(b.hx+6,b.hy-150,b.cfg.rider?'Snakes, attack!':'Hisssss!','#d9c2ff');return}
@@ -7,7 +8,7 @@ function pickAttack(){const b=B,A=b.cfg.atk,small=snakes.filter(s=>s.alive).leng
  const k=other[Math.floor(Math.random()*other.length)];b.st=k;b.t=k==='wave'?50:k==='slam'?40:k==='spikes'?46:30;if(k!=='wave')sfx.hiss()}
 function summon(){const b=B,n=b.phase===2?3:2;for(let i=0;i<n;i++){const hi=Math.max(150,b.hx-150),x=50+Math.random()*(hi-50);const s=mkSnake([x,Math.max(30,x-130),Math.max(x,Math.min(hi,x+130)),GY,1.4+Math.random()*.6,b.phase===2&&i===2?3:(b.cfg.minion||0)],i);s.dy=-380-i*90;s.dir=Math.random()<.5?-1:1;snakes.push(s)}}
 function bossHit(d){const b=B;b.hp-=d||1;b.inv=24;gain(4);shake=Math.max(shake,6);sfx.bossHit();puff(b.hx,b.hy-30,'#c7a2ff',12);pop(b.hx,b.hy-130,['Ha!','Hiyah!','Take that!'][((b.hp%3)+3)%3],'#fff');
- if(b.hp<=0){b.st='defeat';b.t=150;b.fx=b.hx+6;b.fy=b.hy-40;b.fvy=-13;b.fr=0;b.raise=0;b.sw=0;for(const s of snakes)if(s.alive){s.alive=false;puff(s.x,s.y-12,'#9fe34d',8)}waves=[];pop(b.hx,b.hy-160,b.cfg.rider?'Nooo!':b.cfg.duel?'Argh!':b.cfg.name+' is beaten!','#ffc928');sfx.win();return}
+ if(b.hp<=0){b.st='defeat';b.t=150;b.fx=b.hx+6;b.fy=b.hy-40;b.fvy=-13;b.fr=0;b.raise=0;b.sw=0;for(const s of snakes)if(s.alive){s.alive=false;puff(s.x,s.y-12,'#9fe34d',8)}waves=[];spits=[];pop(b.hx,b.hy-160,b.cfg.rider?'Nooo!':b.cfg.duel?'Argh!':b.cfg.name+' is beaten!','#ffc928');sfx.win();return}
  if(b.phase===1&&b.hp<=b.max/2){b.phase=2;pop(b.hx,b.hy-160,b.cfg.name+' is angry!','#ff6b5e');sfx.roar();if(p.hearts<6)items.push({x:170,y:GY-30,dy:-400,vy:0,got:false})}}
 function bossStep(){const b=B,ph2=b.phase===2;b.tick++;if(b.inv>0)b.inv--;if(b.sw>0)b.sw--;
  const rest=GY-130+Math.sin(b.tick*.05)*6;

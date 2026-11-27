@@ -17,6 +17,9 @@ export function shotsDir(testInfo) {
   return dir;
 }
 
+/** Saves a screenshot to tests/shots/<project>/<name>.png. */
+export const shot = (page, testInfo, name) => page.screenshot({ path: path.join(shotsDir(testInfo), `${name}.png`) });
+
 // WebKit won't read manifest.webmanifest over file:// ("Origin null is not allowed"). It only matters on the real
 // https site, where it works, so that one failure is ignored. Any other failed request (a font, a script) still fails.
 const fileQuirk = (url, text) => url.startsWith('file:') && /manifest\.webmanifest$/.test(url) && /Origin null/.test(text);
@@ -34,6 +37,9 @@ export const test = base.extend({
         if (m.type() !== 'error') return;
         // The manifest quirk logs twice, once without a URL; requestfailed above still catches any other file.
         if (/Origin null is not allowed by Access-Control-Allow-Origin/.test(m.text())) return;
+        // Playwright adds a <style> tag to the page for every WebKit screenshot, and the game's CSP blocks it.
+        // The game itself never adds <style> tags; ui.spec.mjs checks for real CSP violations without screenshots.
+        if (/^Refused to apply a stylesheet because its hash, its nonce, or 'unsafe-inline'/.test(m.text())) return;
         errors.push(m.text());
       });
       await use(errors);

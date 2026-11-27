@@ -1,4 +1,5 @@
 /* Snake behaviour: hit boxes (ebox), movement and attacks (moveSnake), getting hit and dying. */
+'use strict';
 /* ---------- enemies ---------- */
 function ebox(s){if(s.type>=4)return{x:s.x-16,y:s.y-60,w:32,h:60};
  if(s.two){const ext=s.bite>=4&&s.bite<=16?22:0;return{x:s.x-66-(s.bdir<0?ext:0),y:s.y-26,w:132+ext,h:26}}

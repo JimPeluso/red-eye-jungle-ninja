@@ -1,4 +1,5 @@
 /* All 23 levels: hand-made Levels 1-10, genLevel() for 11-23, the LEVELS list and boss arenas. */
+'use strict';
 /* ---------- levels ----------
    A level is { name, pal, segs, plats, grass, signs, lant, pouch, sn, end, gate, spit, boss } (full guide in CLAUDE.md).
    segs:  [[fromX, toX], ...] solid ground; the space between two segs is a pit (water/lava if the palette has it)

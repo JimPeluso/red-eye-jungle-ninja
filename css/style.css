@@ -1,5 +1,9 @@
 /* Red Eye Jungle Ninja styles. The game itself is drawn on the canvas; this file styles the HUD, touch buttons and menu screens.
-   Fonts: Lilita One for big text and numbers, Nunito 800 for small text. Ninja red (--red) and coin gold (--gold) stay the same in every level. */
+   Fonts: Lilita One for big text and numbers, Nunito 800 for small text. Ninja red (--red) and coin gold (--gold) stay the same in every level.
+   The fonts are stored in fonts/ (Latin letters only, SIL Open Font License) so the game never loads anything from another website. */
+@font-face{font-family:'Lilita One';font-style:normal;font-weight:400;font-display:swap;src:url(../fonts/lilita-one-latin-400-normal.woff2) format('woff2')}
+@font-face{font-family:'Nunito';font-style:normal;font-weight:700;font-display:swap;src:url(../fonts/nunito-latin-700-normal.woff2) format('woff2')}
+@font-face{font-family:'Nunito';font-style:normal;font-weight:800;font-display:swap;src:url(../fonts/nunito-latin-800-normal.woff2) format('woff2')}
 :root{color-scheme:dark;--red:#e8302a;--redd:#9e1b16;--gold:#ffc928;--line:#14110f}
 *{box-sizing:border-box;min-width:0}
 [hidden]{display:none!important}

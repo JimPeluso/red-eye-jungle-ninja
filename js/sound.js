@@ -1,4 +1,5 @@
 /* Sound effects, made with the Web Audio API (no sound files). */
+'use strict';
 /* ---------- sound ---------- */
 let ac=null,nb=null,muted=false;
 try{muted=localStorage.getItem('redeye-mute')==='1'}catch(e){}

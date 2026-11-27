@@ -50,6 +50,7 @@ export default [
       'no-unused-vars': ['error', { vars: 'local', args: 'none', caughtErrors: 'none' }],
       'no-empty': ['error', { allowEmptyCatch: true }],
       'no-redeclare': ['error', { builtinGlobals: true }],
+      strict: ['error', 'global'],
     },
   },
   ...gameFiles.map(f => ({ files: [f], languageOptions: { globals: declaredByOthers(f) } })),

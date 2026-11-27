@@ -3,7 +3,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import * as espree from 'espree';
-import { test, expect, openGame, tick, holdKey, tapKey, shotsDir, mode, root } from './helpers.mjs';
+import { test, expect, openGame, tick, holdKey, tapKey, shot, mode, root } from './helpers.mjs';
 
 test('no two game files declare the same top-level name (that would blank the game)', () => {
   const seen = {};
@@ -64,7 +64,7 @@ test('every level starts and plays', async ({ page }, testInfo) => {
       await tick(page, 4);
     }
     await page.keyboard.up('ArrowRight');
-    await page.screenshot({ path: path.join(shotsDir(testInfo), `level-${String(i + 1).padStart(2, '0')}.png`) });
+    await shot(page, testInfo, `level-${String(i + 1).padStart(2, '0')}`);
     expect(await page.evaluate(i => __t.li === i && __t.mode === 'play', i), `Level ${i + 1} plays`).toBe(true);
   }
 });
@@ -75,7 +75,7 @@ test('every boss a level uses starts', async ({ page }, testInfo) => {
   for (const k of used) {
     await page.evaluate(k => __t.startBoss(k), k);
     await tick(page, 78);
-    await page.screenshot({ path: path.join(shotsDir(testInfo), `boss-${String(k).padStart(2, '0')}.png`) });
+    await shot(page, testInfo, `boss-${String(k).padStart(2, '0')}`);
     const name = await page.evaluate(k => __t.BOSSES[k].name, k);
     expect(await page.evaluate(() => !!__t.B && __t.mode === 'play'), `boss ${k} (${name}) starts`).toBe(true);
   }

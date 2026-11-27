@@ -1,4 +1,5 @@
 /* Lightning, health bars, shock waves, grass, then world() and render() put each frame together. */
+'use strict';
 function bolt(b){const n=10,top=TOP-20,a=Math.min(1,b.life/10),pts=[];
  for(let i=0;i<=n;i++){const t=i/n;pts.push([b.x+(i===0||i===n?0:(hh(b.x+i*7+Math.floor(b.life/3))-.5)*40),top+(b.y-top)*t])}
  ctx.globalAlpha=a;ctx.lineJoin='round';ctx.lineCap='round';ctx.beginPath();pts.forEach(([x,y],i)=>i?ctx.lineTo(x,y):ctx.moveTo(x,y));
