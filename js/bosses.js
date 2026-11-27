@@ -14,6 +14,7 @@ const BOSSES = [
   },
   {
     name: 'Thunder',
+    mad: 'lightning',
     sub: 'the giant blue cobra',
     pal: 'tree',
     hp: 35,
@@ -23,6 +24,7 @@ const BOSSES = [
   },
   {
     name: 'Tide',
+    mad: 'tide',
     sub: 'the giant river cobra',
     pal: 'river',
     hp: 40,
@@ -32,6 +34,7 @@ const BOSSES = [
   },
   {
     name: 'Ember',
+    mad: 'fire',
     sub: 'the giant fire cobra',
     pal: 'temple',
     hp: 45,
@@ -41,6 +44,7 @@ const BOSSES = [
   },
   {
     name: 'Shadow',
+    mad: 'rocks',
     sub: 'the giant cave cobra',
     pal: 'cave',
     hp: 50,

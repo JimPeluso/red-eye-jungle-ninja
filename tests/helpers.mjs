@@ -98,6 +98,14 @@ export async function tick(page, n = 1) {
   }, n);
 }
 
+/** Moves the game n frames without drawing. Drawing a whole iPad-sized frame is slow in WebKit, so use this in long
+    loops; shot() draws before it takes a picture. */
+export async function run(page, n = 1) {
+  await page.evaluate(n => {
+    for (let i = 0; i < n; i++) __t.step();
+  }, n);
+}
+
 /** Holds a key (by its KeyboardEvent.code) for n frames, then releases it. */
 export async function holdKey(page, code, n) {
   await page.keyboard.down(code);

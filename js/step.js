@@ -336,11 +336,17 @@ function step() {
     const b = B,
       live = b.st !== 'intro' && b.st !== 'defeat';
     for (const w of waves) {
+      if (w.big && w.warn > 0) {
+        // Tide's Tidal Wave: the water rises behind Tide first (the warning), then it rolls
+        w.warn--;
+        w.h = 95 * (1 - w.warn / MAD_WARN);
+        continue;
+      }
       w.x += w.vx;
       w.life--;
       if (w.x < -60) w.life = 0;
-      const wb = { x: w.x - 14, y: GY - 46, w: 28, h: 46 };
-      if (swing && hit(blade, wb)) {
+      const wb = w.big ? { x: w.x - 30, y: GY - w.h, w: 64, h: w.h } : { x: w.x - 14, y: GY - 46, w: 28, h: 46 };
+      if (!w.big && swing && hit(blade, wb)) {
         w.life = 0;
         pop(w.x, GY - 70, 'Blocked!', '#bfefff');
         sparkle(w.x, GY - 24);

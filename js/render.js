@@ -37,6 +37,10 @@ function hpBar(s) {
   rr(s.x - w / 2, y, Math.max(3, w * f), 5, 2.5);
 }
 function wave(w) {
+  if (w.big) {
+    drawTide(w);
+    return;
+  }
   ctx.save();
   if (w.vx > 0) {
     ctx.translate(2 * w.x, 0);

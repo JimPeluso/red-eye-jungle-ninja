@@ -3,7 +3,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
 import * as espree from 'espree';
-import { test, expect, openGame, tick, holdKey, tapKey, shot, mode, root } from './helpers.mjs';
+import { test, expect, openGame, tick, run, holdKey, tapKey, shot, mode, root } from './helpers.mjs';
 
 test('no two game files declare the same top-level name (that would blank the game)', () => {
   const seen = {};
@@ -82,19 +82,24 @@ test('bosses that burrow go underground, chase, burst up, lie dazed and can be h
       __t.p.inv = 9999;
       Object.assign(__t.B, { st: 'idle', t: 1, count: 1 });
     });
-    const seen = new Set();
-    for (let i = 0; i < 300; i++) {
-      await tick(page, 2);
-      const st = await page.evaluate(() => __t.B.st);
-      seen.add(st);
-      if (st === 'under' && !seen.has('shot')) {
-        seen.add('shot');
-        await shot(page, testInfo, `burrow-${name.toLowerCase()}`);
-      }
-      if (st === 'dazed') break;
-    }
+    // frame by frame inside the page (one round trip per frame is too slow in WebKit): every state the boss goes
+    // through, stopping for a screenshot while it's underground and again once it's dazed
+    const until = (stop, seen) =>
+      page.evaluate(
+        ({ stop, seen }) => {
+          for (let i = 0; i < 600 && __t.B.st !== stop; i++) {
+            __t.step();
+            if (!seen.includes(__t.B.st)) seen.push(__t.B.st);
+          }
+          return seen;
+        },
+        { stop, seen },
+      );
+    let seen = await until('under', []);
+    await shot(page, testInfo, `burrow-${name.toLowerCase()}`);
+    seen = await until('dazed', seen);
     expect(
-      ['dive', 'under', 'rumble', 'burst', 'dazed'].every(s => seen.has(s)),
+      ['dive', 'under', 'rumble', 'burst', 'dazed'].every(s => seen.includes(s)),
       `${name} (Level ${lvl + 1}) goes underground, chases, bursts up and lies dazed`,
     ).toBe(true);
     const hp = await page.evaluate(() => __t.B.hp);
@@ -121,7 +126,7 @@ test('every level starts and plays', async ({ page }, testInfo) => {
     for (let k = 0; k < 12; k++) {
       if (k % 4 === 0) await page.keyboard.press('Space');
       if (k % 2 === 0) await page.keyboard.press('KeyZ');
-      await tick(page, 4);
+      await run(page, 4); // drawn once, for the screenshot below
     }
     await page.keyboard.up('ArrowRight');
     await shot(page, testInfo, `level-${String(i + 1).padStart(2, '0')}`);
