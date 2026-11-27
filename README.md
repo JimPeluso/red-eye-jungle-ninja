@@ -12,6 +12,8 @@ Designed by a young game designer and built together with Claude.
 
 Open the link in Safari, tap **Share → Add to Home Screen**, and it launches full screen like an app. Play with the iPad turned sideways.
 
+The game remembers where you got to. Next time, tap **Continue** to go back to your last checkpoint with your hearts, coins and stars.
+
 ## Controls
 
 | Action | Keyboard | iPad | Game controller |

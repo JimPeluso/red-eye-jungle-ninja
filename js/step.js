@@ -423,6 +423,7 @@ function step() {
       p.cp = { x: l[0], y: l[1] };
       pop(l[0], l[1] - 104, 'Checkpoint!', '#ffd36b');
       sfx.chime();
+      saveGame();
     }
   });
   cam += (clampCam(cx - viewW * (boss ? 0.45 : 0.4)) - cam) * 0.12;
