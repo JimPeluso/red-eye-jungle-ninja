@@ -38,6 +38,8 @@ function topLevelNames(file) {
 
 const declared = Object.fromEntries(gameFiles.map(f => [f, topLevelNames(f)]));
 const declaredByOthers = file => Object.assign({}, ...gameFiles.filter(f => f !== file).map(f => declared[f]));
+// The bot and the jump measurer (tests/model/) run inside the page and use the game's globals directly.
+const allGameGlobals = Object.assign({}, ...Object.values(declared));
 
 export default [
   { ignores: ['node_modules/', 'tests/shots/', 'test-results/', 'playwright-report/', '_site/', 'fonts/'] },
@@ -60,7 +62,10 @@ export default [
       ecmaVersion: 'latest',
       sourceType: 'module',
       // page.evaluate() callbacks run in the browser and use the ?test hook (window.__t).
-      globals: { ...globals.node, ...globals.browser, __t: 'readonly' },
+      globals: { ...globals.node, ...globals.browser, __t: 'readonly', __bot: 'readonly' },
     },
+    // Playwright's way to get testInfo without fixtures is `async ({}, testInfo) => ...`.
+    rules: { 'no-empty-pattern': 'off' },
   },
+  { files: ['tests/model/**/*.mjs'], languageOptions: { globals: allGameGlobals } },
 ];

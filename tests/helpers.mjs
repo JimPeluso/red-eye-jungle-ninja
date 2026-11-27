@@ -17,8 +17,11 @@ export function shotsDir(testInfo) {
   return dir;
 }
 
-/** Saves a screenshot to tests/shots/<project>/<name>.png. */
-export const shot = (page, testInfo, name) => page.screenshot({ path: path.join(shotsDir(testInfo), `${name}.png`) });
+/** Draws the current frame (the paused clock means nothing else does), then saves tests/shots/<project>/<name>.png. */
+export async function shot(page, testInfo, name) {
+  await page.evaluate(() => window.__t?.draw());
+  await page.screenshot({ path: path.join(shotsDir(testInfo), `${name}.png`) });
+}
 
 // WebKit won't read manifest.webmanifest over file:// ("Origin null is not allowed"). It only matters on the real
 // https site, where it works, so that one failure is ignored. Any other failed request (a font, a script) still fails.

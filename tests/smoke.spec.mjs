@@ -49,6 +49,7 @@ test('Rock Snake: hidden it just clangs, once it pops out it can be beaten', asy
 });
 
 test('every level starts and plays', async ({ page }, testInfo) => {
+  test.setTimeout(5 * 60_000); // 20+ screenshots; WebKit at iPad resolution is slow
   await openGame(page);
   const n = await page.evaluate(() => __t.LEVELS.length);
   for (let i = 0; i < n; i++) {
@@ -70,6 +71,7 @@ test('every level starts and plays', async ({ page }, testInfo) => {
 });
 
 test('every boss a level uses starts', async ({ page }, testInfo) => {
+  test.setTimeout(5 * 60_000); // 20+ screenshots; WebKit at iPad resolution is slow
   await openGame(page);
   const used = await page.evaluate(() => [...new Set(__t.LEVELS.map(L => L.boss))]);
   for (const k of used) {
