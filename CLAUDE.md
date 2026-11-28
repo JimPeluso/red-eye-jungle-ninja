@@ -299,7 +299,7 @@ The hood markings are a ring and a diamond. They once looked like a second pair 
 
 Boss fight mechanics:
 - Every boss has a **phase 2** below half health: faster, more snakes.
-- **Mad moves** (`js/mad.js`): a boss with a `mad` field gets mad at phase 2. A banner names the move ("Moss is mad! Vine Grab!"), the move comes straight away, then every 3rd attack. The first five bosses, Master Fang and the Spike King have one each:
+- **Mad moves** (`js/mad.js`): a boss with a `mad` field gets mad at phase 2. A banner names the move ("Moss is mad! Vine Grab!"), the move comes straight away, then every 3rd attack. The designer picked one for every boss (November 28, 2026); these are built so far, in level order:
 
   | Boss | `mad` | Move | Warning | Dodge |
   |---|---|---|---|---|
@@ -308,8 +308,20 @@ Boss fight mechanics:
   | Tide (3) | `tide` | **Tidal Wave** | water rises behind Tide | jump over the wave, or stand on a log |
   | Ember (4) | `fire` | **Fire Rain** | four shadows grow on the ground, one after another | stay out of the shadows |
   | Shadow (5) | `rocks` | **Cave-in** | five shadows grow, one after another | stay out of the shadows |
+  | Venom (6) | `fog` | **Poison Fog** | a purple cloud forms in front of Venom and a dashed line shows its height | duck (Sneak); a log works too |
+  | Bog (8) | `mud` | **Mud Wave** | a wave of mud rises behind Bog | jump it (lower than Tide's: about 10 frames of timing slack), or stand on a log |
   | Master Fang (10) | `slash` | **Fang Slash** | he raises his sword, a purple crescent forms and a dashed line shows its height | duck (Sneak); a log works too |
+  | Dune (12) | `sand` | **Sandstorm** | a sand cloud forms, with a dashed line; it flies fast | duck (Sneak) |
+  | Crystal (13) | `crystals` | **Crystal Rain** | shadows ringed in crystal light, closer together than Cave-in | stay out of the shadows |
+  | Inferno (20) | `firewall` | **Fire Wall** | a row of flames rises behind Inferno | jump it (about 9 frames of slack), or stand on a log |
+  | Toxic (22) | `gas` | **Poison Gas** | a green cloud forms, with a dashed line | duck (Sneak) |
   | Spike King (23) | `ball` | **Spike Ball** | poof, he curls into a spiky ball that shakes and growls | jump over it, there and back (it hurts at most once) |
+
+  **Still to build** (his picks, cheapest first; Dad's decisions in brackets):
+  - Lava Geysers (Magma, 7), Geysers (Splash, 16), Mushroom Pop (Spore, 17) and Lightning Clouds (Cyclone, 21): ground spots with new looks.
+  - Rex Stomp (Rex, 11: jump three ground waves), Thunder Clap (Bolt, 14: jump two shock rings), Twister (Storm, 9: jump a little tornado) and Shadow Snakes (Nightshade, 18: jump them): small new parts.
+  - Coin Storm (Goldscale, 19). [The coins go into a pot shown on screen, paid out only when Goldscale is beaten, at most 10, so they can't be farmed with "Try again".]
+  - Nightfall (Dusk, 15): the screen goes dark and fireflies show the safe spots. [Check the frame rate on the real iPad before merging.]
 
   The banner's third line is the move's `tip`, how to dodge it ("Duck! (Sneak)").
 

@@ -39,7 +39,7 @@ function hpBar(s) {
 function wave(w) {
   // a mad move's big wave, sweep or roller (draw-mad.js)
   if (w.big) {
-    drawBigWave(w);
+    LOOKS[w.look].draw(w);
     return;
   }
   if (w.sweep) {

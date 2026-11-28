@@ -30,6 +30,7 @@ export const DODGES = {
     const t = __t,
       k = t.key;
     t.respawnAt(150, 460);
+    t.p.inv = 0; // respawning makes him invincible for a moment
     for (let i = 0; i < 3; i++) t.step();
     window.press('J');
     k.J = 1;
@@ -49,19 +50,26 @@ export const DODGES = {
   },
 
   /** jump: a standing jump each time a roller or big wave comes at Red Eye, when the part of it that hurts is `at`
-      px from his body, until it's gone. `times`: how many jumps that should take (the Spike Ball: there and back). */
+      px from his body. `times`: how many jumps that should take (the Spike Ball: there and back). Done when he has
+      landed after the last one and it has gone past him (the boss is dazed by then, or soon after).
+      It starts on open ground (x 470): where Red Eye starts a fight, a jump lands him on the low log instead. */
   jump: ({ at, times }) => {
     const t = __t,
       k = t.key;
+    t.respawnAt(470, 460);
+    t.p.inv = 0; // respawning makes him invincible for a moment
     const mover = () => t.waves.find(w => w.big || w.roll);
     let jumps = 0,
-      hold = 0;
+      hold = 0,
+      passed = false;
     for (let i = 0; i < 700 && mover(); i++) {
       const w = mover(),
         box = t.moverBox(w),
         left = w.vx < 0,
         coming = w.warn === 0 && (left ? w.x > t.p.x : w.x < t.p.x),
         gap = left ? box.x - (t.p.x + 29) : t.p.x + 5 - (box.x + box.w);
+      passed = w.warn === 0 && (left ? box.x + box.w < t.p.x + 5 : box.x > t.p.x + 29);
+      if (jumps === times && passed && t.p.on) break;
       if (t.p.on && coming && gap <= at && jumps < times) {
         window.press('J');
         k.J = 1;
@@ -72,6 +80,6 @@ export const DODGES = {
       t.step();
     }
     k.J = 0;
-    return jumps === times && !mover();
+    return jumps === times && (passed || !mover());
   },
 };

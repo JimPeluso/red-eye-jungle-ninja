@@ -96,8 +96,8 @@ test('stepping off the leaves dodges Vine Grab, then Moss is dazed and can be hi
 test('bosses without a mad move still just get angry', async ({ page }) => {
   await openGame(page);
   await page.evaluate(() => {
-    __t.startLevel(5); // Venom, Level 6: no mad move yet
-    __t.startBoss(__t.LEVELS[5].boss);
+    __t.startLevel(0);
+    __t.startBoss(__t.BOSSES.findIndex(b => !b.mad && !b.duel)); // the first boss without one (Thorn is never used)
   });
   await tick(page, 200);
   await page.evaluate(() => {
@@ -143,16 +143,22 @@ async function hitDazed(page) {
   return [hp, await page.evaluate(() => __t.B.hp)];
 }
 
-// Every boss with a mad move, and the dodge a player would use (tests/dodges.mjs): walk to safe ground, a log, duck,
-// or jump it (with the jump's options).
+// Every boss with a mad move, in level order, and the dodge a player would use (tests/dodges.mjs): walk to safe
+// ground, a log, duck, or jump it. A jump's `at` is the middle of the distances a standing jump clears it from:
+// Mud Wave 20-72px, Fire Wall 24-68px, Spike Ball 26-88px (there and back).
 const MOVES = [
   [1, 'Moss', 'Vine Grab!', 'walk'],
   [2, 'Thunder', 'Lightning Call!', 'walk'],
   [3, 'Tide', 'Tidal Wave!', 'log'],
   [4, 'Ember', 'Fire Rain!', 'walk'],
   [5, 'Shadow', 'Cave-in!', 'walk'],
+  [6, 'Venom', 'Poison Fog!', 'duck'],
+  [8, 'Bog', 'Mud Wave!', 'jump', { at: 46, times: 1 }],
   [10, 'Master Fang', 'Fang Slash!', 'duck'],
-  // a standing jump clears the Spike Ball when it's 28 to 86px away; jump at 57, there and back
+  [12, 'Dune', 'Sandstorm!', 'duck'],
+  [13, 'Crystal', 'Crystal Rain!', 'walk'],
+  [20, 'Inferno', 'Fire Wall!', 'jump', { at: 46, times: 1 }],
+  [22, 'Toxic', 'Poison Gas!', 'duck'],
   [23, 'Spike King', 'Spike Ball!', 'jump', { at: 57, times: 2 }],
 ];
 

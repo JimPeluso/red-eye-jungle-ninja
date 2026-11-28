@@ -18,7 +18,8 @@
    - drops: shadows grow on the ground one after another, then something drops into each (zones with sky: true).
      n how many, gap px between them. Dodge: stay out of the shadows.
    - wave: a big wave rises behind the boss during the warning, then rolls across the arena (a `waves` entry with
-     big: true). It can't be blocked. h how tall, speed px per frame. Dodge: jump it, or stand on a log.
+     big: true). It can't be blocked. h how tall, speed px per frame. Dodge: jump it, or stand on a log (Tide's is
+     95px tall: a jump only just clears it, so its tip says to use a log).
    - sweep: something forms in front of the boss, then flies across the arena (`waves`, sweep: true).
      y height of its middle above the ground (70 is head height), speed, sword (Master Fang raises his sword
      during the warning and swings it). Dodge at head height: duck.
@@ -49,6 +50,16 @@ const MAD = {
   // Master Fang and the Spike King stay mad until their slash or ball is gone
   slash: { name: 'Fang Slash!', tip: 'Duck! (Sneak)', part: 'sweep', look: 'fang', sword: true },
   ball: { name: 'Spike Ball!', tip: 'Jump over it, there and back!', part: 'roller', look: 'spikes' },
+  // Venom (Level 6), Dune (12) and Toxic (22): a cloud drifts across at head height
+  fog: { name: 'Poison Fog!', tip: 'Duck! (Sneak)', part: 'sweep', look: 'fog', speed: 5, sound: 'hiss' },
+  sand: { name: 'Sandstorm!', tip: 'Duck! (Sneak)', part: 'sweep', look: 'sand', speed: 7, sound: 'whoosh' },
+  gas: { name: 'Poison Gas!', tip: 'Duck! (Sneak)', part: 'sweep', look: 'gas', speed: 6, sound: 'hiss' },
+  // Bog (8) and Inferno (20): lower than Tide's wave, so a standing jump clears them. Timing slack: Mud Wave about
+  // 10 frames, Fire Wall about 9 (Tide's about 1, so its tip says to use a log)
+  mud: { name: 'Mud Wave!', tip: 'Jump it!', part: 'wave', look: 'mud', h: 52, speed: 5 },
+  firewall: { name: 'Fire Wall!', tip: 'Jump it!', part: 'wave', look: 'firewall', h: 64, speed: 5, sound: 'roar' },
+  // Crystal (13): closer together than Fire Rain and Cave-in, with gaps about two Red Eyes wide
+  crystals: { name: 'Crystal Rain!', tip: 'Stay out of the shadows!', part: 'drops', look: 'crystal', n: 6, gap: 130 },
 };
 const PARTS = {
   spots: { def: { n: 3, gap: 210, w: 70, h: 100, act: 14, stay: 20, sound: 'crackle' }, start: groundSpots },
