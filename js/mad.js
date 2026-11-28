@@ -8,36 +8,65 @@
    - one clear way to dodge it,
    - 1 heart of damage, never at the same time as another attack, and no flashing,
    - afterwards the boss is dazed (head down on the ground near Red Eye) and can be hit.
-   Parts so far:
-   - Ground spots (`zones`): a patch of ground warns, then erupts. Used by Moss's Vine Grab and Thunder's Lightning
-     Call, and (with sky: true, a shadow that grows, then something drops into it) by Ember's Fire Rain and Shadow's
-     Cave-in. Each zone: { kind, x (centre), w, h (how tall it erupts), t (frames so far), warn, act (frames it can
-     hurt), sky? }.
-   - The big wave (Tide's Tidal Wave): a `waves` entry with big: true. It rises during its warning, can't be
-     blocked, and is jumped over or ridden out on a log.
-   - Movers (Master Fang's Fang Slash, the Spike King's Spike Ball): `waves` entries with slash: true or ball: true,
-     moved by stepMover() below. They wait out their warning, then fly or roll, and can only hurt once.
-   Each move has a `tip`, the line under its name in the banner that says how to dodge it. */
+   Each move in MAD is one part (PARTS below) with its options, drawn with a look (LOOKS in draw-mad.js, by name).
+   A new move that reuses a part is one MAD line, plus a LOOKS entry if it needs a new look. Each move has a `tip`,
+   the line under its name in the banner that says how to dodge it, and a `sound` when it starts.
+   The parts and their options (a move only lists the options that differ from the part's `def`):
+   - spots: ground spots (`zones`) appear around Red Eye, one right under him, warn, then erupt.
+     n how many, gap px between them, w how wide, h how tall they erupt, act frames they can hurt, stay frames the
+     boss stays mad after the warning. Dodge: step off them.
+   - drops: shadows grow on the ground one after another, then something drops into each (zones with sky: true).
+     n how many, gap px between them. Dodge: stay out of the shadows.
+   - wave: a big wave rises behind the boss during the warning, then rolls across the arena (a `waves` entry with
+     big: true). It can't be blocked. h how tall, speed px per frame. Dodge: jump it, or stand on a log.
+   - sweep: something forms in front of the boss, then flies across the arena (`waves`, sweep: true).
+     y height of its middle above the ground (70 is head height), speed, sword (Master Fang raises his sword
+     during the warning and swings it). Dodge at head height: duck.
+   - roller: the boss curls up into a ball that shakes during the warning, rolls across the arena, bounces off the
+     far wall and rolls back home, then the boss uncurls (`waves`, roll: true). While curled the cobra isn't drawn
+     and can't be hit; sword and stars clang off the ball. r radius, speed. Dodge: jump it, there and back.
+   Movers (wave, sweep, roller) are moved by stepMover() and can only hurt once. */
 const MAD = {
-  vines: { name: 'Vine Grab!', tip: 'Step off the leaves!', start: vineGrab }, // Moss
-  lightning: { name: 'Lightning Call!', tip: 'Get out of the circles!', start: lightningCall }, // Thunder
+  // Moss
+  vines: {
+    name: 'Vine Grab!',
+    tip: 'Step off the leaves!',
+    part: 'spots',
+    look: 'vines',
+    n: 2,
+    gap: 230,
+    w: 92,
+    act: 40,
+    stay: 40,
+    sound: 'rustle',
+  },
+  // Thunder: lightning reaches the sky, so it can't be jumped
+  lightning: { name: 'Lightning Call!', tip: 'Get out of the circles!', part: 'spots', look: 'lightning', h: 700 },
   // Tide stays mad (rearing) until its wave has rolled past Red Eye, then it's dazed
-  tide: {
-    name: 'Tidal Wave!',
-    tip: 'Jump it, or get on a log!',
-    start: tidalWave,
+  tide: { name: 'Tidal Wave!', tip: 'Jump it, or get on a log!', part: 'wave', look: 'water' },
+  fire: { name: 'Fire Rain!', tip: 'Stay out of the shadows!', part: 'drops', look: 'fireball' }, // Ember
+  rocks: { name: 'Cave-in!', tip: 'Stay out of the shadows!', part: 'drops', look: 'rock', n: 5 }, // Shadow
+  // Master Fang and the Spike King stay mad until their slash or ball is gone
+  slash: { name: 'Fang Slash!', tip: 'Duck! (Sneak)', part: 'sweep', look: 'fang', sword: true },
+  ball: { name: 'Spike Ball!', tip: 'Jump over it, there and back!', part: 'roller', look: 'spikes' },
+};
+const PARTS = {
+  spots: { def: { n: 3, gap: 210, w: 70, h: 100, act: 14, stay: 20, sound: 'crackle' }, start: groundSpots },
+  drops: { def: { n: 4, gap: 150, sound: 'whoosh' }, start: skyDrops },
+  wave: {
+    def: { h: 95, speed: 4.5, sound: 'rumble' },
+    start: bigWave,
     busy: () => waves.some(w => w.big && w.x + 34 > p.x),
   },
-  fire: { name: 'Fire Rain!', tip: 'Stay out of the shadows!', start: b => skyDrops(b, 'fireball', 4) }, // Ember
-  rocks: { name: 'Cave-in!', tip: 'Stay out of the shadows!', start: b => skyDrops(b, 'rock', 5) }, // Shadow
-  // Master Fang and the Spike King stay mad until their slash or ball is gone
-  slash: { name: 'Fang Slash!', tip: 'Duck! (Sneak)', start: fangSlash, busy: () => waves.some(w => w.slash) },
-  ball: { name: 'Spike Ball!', tip: 'Jump over it, there and back!', start: spikeBall, busy: () => curled() },
+  sweep: { def: { y: 70, speed: 7.5, sound: 'crackle' }, start: sweep, busy: () => waves.some(w => w.sweep) },
+  roller: { def: { r: 36, speed: 5.5, sound: 'rumble' }, start: roller, busy: () => curled() },
 };
 const MAD_EVERY = 3; // once mad, every 3rd attack is the mad move
 const MAD_WARN = 48; // frames of warning (0.8 s); the fair-play minimum is 45
 const MAD_DAZED = 100; // frames the boss stays dazed afterwards (1.7 s)
 
+/** A boss's mad move with all its options: the part's defaults, then the move's own. */
+const madMove = b => ({ ...PARTS[MAD[b.cfg.mad].part].def, ...MAD[b.cfg.mad] });
 /** bossHit() calls this when a boss with a mad move reaches half health. */
 function getMad(b) {
   showBanner(b.cfg.name + ' is mad!', MAD[b.cfg.mad].name, MAD[b.cfg.mad].tip, true);
@@ -46,18 +75,10 @@ function getMad(b) {
 }
 /** pickAttack() calls this when it's time for the mad move. */
 function startMad(b) {
+  const m = madMove(b);
   b.st = 'mad';
-  MAD[b.cfg.mad].start(b);
-}
-
-/* Moss, Vine Grab: leaves rustle on two patches of ground (one right under Red Eye), then vines shoot up from them.
-   Dodge: step off the leaves (or stand on a log). */
-function vineGrab(b) {
-  const at = Math.max(70, Math.min(b.hx - 120, p.x + 17));
-  const other = at + 230 < b.hx - 40 ? at + 230 : Math.max(60, at - 230); // leaves safe ground in between
-  for (const x of [at, other]) zones.push({ kind: 'vines', x, w: 92, h: 100, t: 0, warn: MAD_WARN, act: 40 });
-  b.t = MAD_WARN + 40;
-  sfx.rustle();
+  PARTS[m.part].start(b, m);
+  sfx[m.sound]();
 }
 
 /** Spots for a mad move: one right under Red Eye, then others every `gap` px either side, staying in the arena and
@@ -73,106 +94,129 @@ function spotsAround(b, n, gap) {
   return out;
 }
 
-/* Thunder, Lightning Call: three circles on the ground crackle and glow, then lightning strikes each one.
-   Dodge: step out of the circles (lightning can't be jumped). */
-function lightningCall(b) {
-  for (const x of spotsAround(b, 3, 210))
-    zones.push({ kind: 'lightning', x, w: 70, h: 700, t: 0, warn: MAD_WARN, act: 14 });
-  b.t = MAD_WARN + 20;
-  sfx.crackle();
+/* Part: ground spots. Moss's Vine Grab (leaves rustle on two patches, then vines shoot up) and Thunder's Lightning
+   Call (three circles crackle and glow, then lightning strikes each one). */
+function groundSpots(b, m) {
+  for (const x of spotsAround(b, m.n, m.gap))
+    zones.push({ kind: m.look, x, w: m.w, h: m.h, t: 0, warn: MAD_WARN, act: m.act });
+  b.t = MAD_WARN + m.stay;
 }
 
-/* Tide, Tidal Wave: water rises behind Tide, then a big wave rolls across the arena.
-   Dodge: jump over it, or stand on a log. The wave is a `waves` entry with big: true (step.js, draw-mad.js). */
-function tidalWave(b) {
-  waves.push({ big: true, x: b.hx + 70, vx: -4.5, life: 600, warn: MAD_WARN, h: 0 });
-  b.t = MAD_WARN + 20;
-  sfx.rumble();
-}
-
-/* Part B, from the sky (Ember's Fire Rain, Shadow's Cave-in): shadows grow on the ground one after another, then a
-   fireball or a rock drops into each. Dodge: stay out of the shadows. */
-function skyDrops(b, kind, n) {
-  spotsAround(b, n, 150).forEach((x, i) =>
-    zones.push({ kind, x, w: 64, h: 60, t: 0, warn: MAD_WARN + i * 10, act: 10, sky: true }),
+/* Part: from the sky. Ember's Fire Rain and Shadow's Cave-in: shadows grow on the ground one after another, then a
+   fireball or a rock drops into each. */
+function skyDrops(b, m) {
+  spotsAround(b, m.n, m.gap).forEach((x, i) =>
+    zones.push({ kind: m.look, x, w: 64, h: 60, t: 0, warn: MAD_WARN + i * 10, act: 10, sky: true }),
   );
-  b.t = MAD_WARN + (n - 1) * 10 + 20;
-  sfx.whoosh();
+  b.t = MAD_WARN + (m.n - 1) * 10 + 20;
 }
 
-/* Master Fang, Fang Slash: he raises his sword while a purple sword wave forms in front of the cobra and a faint
-   line shows how high it will fly, then it flies across the arena at head height.
-   Dodge: duck (Sneak) and it goes over Red Eye's head. Standing on a log works too. */
-function fangSlash(b) {
-  waves.push({ slash: true, x: b.hx - 70, vx: -7.5, life: 400, warn: MAD_WARN });
-  b.raise = 1;
+/* Part: the big wave. Tide's Tidal Wave: water rises behind Tide, then a big wave rolls across the arena. */
+function bigWave(b, m) {
+  waves.push({ big: true, look: m.look, x: b.hx + 70, vx: -m.speed, life: 600, warn: MAD_WARN, h: 0, top: m.h });
   b.t = MAD_WARN + 20;
-  sfx.crackle();
 }
-/** The part of Fang's sword wave that hurts: hits a standing Red Eye, flies 8px over a ducking one. */
-const slashBox = w => ({ x: w.x - 28, y: GY - 96, w: 50, h: 52 });
 
-/* Spike King, Spike Ball: poof, he curls up into a giant spiky ball that shakes and growls (the warning), rolls
-   across the arena, bounces off the far wall and rolls back home, then uncurls, dizzy.
-   Dodge: jump over it, there and back (a standing jump clears it with about 11 frames to spare). */
-const BALL_R = 36,
-  BALL_SPEED = 5.5;
-const curled = () => waves.some(w => w.ball);
-function spikeBall(b) {
+/* Part: the sweep. Master Fang's Fang Slash: he raises his sword while a purple sword wave forms in front of the
+   cobra and a faint line shows how high it will fly, then it flies across the arena at head height. Ducking puts
+   Red Eye 8px under it; a log works too. */
+function sweep(b, m) {
+  waves.push({
+    sweep: true,
+    look: m.look,
+    x: b.hx - 70,
+    y: m.y,
+    vx: -m.speed,
+    life: 400,
+    warn: MAD_WARN,
+    sword: m.sword,
+  });
+  if (m.sword) b.raise = 1;
+  b.t = MAD_WARN + 20;
+}
+
+/* Part: the roller. The Spike King's Spike Ball: poof, he curls up into a giant spiky ball that shakes and growls
+   (the warning), rolls across the arena, bounces off the far wall and rolls back home, then uncurls, dizzy.
+   A standing jump clears the Spike Ball with about 11 frames to spare. */
+const curled = () => waves.some(w => w.roll);
+function roller(b, m) {
   const x = b.hx + 30;
-  waves.push({ ball: true, x, home: x, vx: 0, life: 900, warn: MAD_WARN, spin: 0 });
+  waves.push({
+    roll: true,
+    look: m.look,
+    x,
+    home: x,
+    r: m.r,
+    speed: m.speed,
+    vx: 0,
+    life: 900,
+    warn: MAD_WARN,
+    spin: 0,
+  });
   b.t = MAD_WARN + 20;
-  poof(b, x);
-  sfx.rumble();
+  poof(b, x, m.r);
 }
-/** The part of the ball that hurts: its body, not the tips of its spikes. */
-const ballBox = w => ({ x: w.x - BALL_R + 6, y: GY - 2 * BALL_R + 8, w: 2 * BALL_R - 12, h: 2 * BALL_R - 8 });
 /** A puff of smoke in the boss's colours, where the cobra curls up into a ball or uncurls again. */
-function poof(b, x) {
+function poof(b, x, r) {
   puff(b.hx, b.hy, b.col.b, 14);
-  puff(x, GY - BALL_R, b.col.a, 16);
+  puff(x, GY - r, b.col.a, 16);
   puff(x + 70, GY - 30, b.col.m, 10);
   sfx.whoosh();
 }
 
-/** One frame of a mover (Fang's sword wave or the Spike King's ball). Sword and stars clang off the ball. */
+/** The part of a mover that hurts. The sweep hits a standing Red Eye and flies over a ducking one; the roller's is
+    its body, not the tips of its spikes. */
+function moverBox(w) {
+  if (w.big) return { x: w.x - 30, y: GY - w.h, w: 64, h: w.h };
+  if (w.sweep) return { x: w.x - 28, y: GY - w.y - 26, w: 50, h: 52 };
+  return { x: w.x - w.r + 6, y: GY - 2 * w.r + 8, w: 2 * w.r - 12, h: 2 * w.r - 8 };
+}
+
+/** One frame of a mover (the big wave, the sweep or the roller). Sword and stars clang off the roller. */
 function stepMover(w, pb, swing, blade) {
   if (w.warn > 0) {
-    if (--w.warn === 0) {
-      if (w.slash) {
-        B.raise = 0;
-        B.sw = 16; // Fang swings his sword
+    w.warn--;
+    if (w.big)
+      w.h = w.top * (1 - w.warn / MAD_WARN); // the wave rises behind the boss
+    else if (w.warn === 0) {
+      if (w.sweep) {
+        if (w.sword) {
+          B.raise = 0;
+          B.sw = 16; // Fang swings his sword
+        }
         sfx.whoosh();
       } else {
-        w.vx = -BALL_SPEED;
+        w.vx = -w.speed;
         sfx.roar();
       }
-    } else if (w.ball && w.warn % 16 === 0) sfx.rumble();
+    } else if (w.roll && w.warn % 16 === 0) sfx.rumble();
     return;
   }
   w.x += w.vx;
   w.life--;
-  if (w.slash) {
+  if (w.big) {
+    if (w.x < -60) w.life = 0;
+  } else if (w.sweep) {
     if (w.x < -80) w.life = 0;
   } else {
-    w.spin += w.vx / BALL_R;
+    w.spin += w.vx / w.r;
     if (B.tick % 5 === 0) dust(w.x, GY, 2);
-    if (w.vx < 0 && w.x <= 10 + BALL_R) {
+    if (w.vx < 0 && w.x <= 10 + w.r) {
       // bounces off the wall at the far end
-      w.x = 10 + BALL_R;
-      w.vx = BALL_SPEED;
+      w.x = 10 + w.r;
+      w.vx = w.speed;
       shake = Math.max(shake, 10);
       dust(w.x - 20, GY, 12);
       sfx.thud();
     } else if (w.vx > 0 && w.x >= w.home) {
       // home again: uncurls
       w.life = 0;
-      poof(B, w.x);
+      poof(B, w.x, w.r);
       return;
     }
   }
-  const box = w.slash ? slashBox(w) : ballBox(w);
-  if (w.ball) {
+  const box = moverBox(w);
+  if (w.roll) {
     const clang = (x, y) => {
       pop(x, y - 24, 'Clang!', '#dfe6ea');
       sparkle(x, y);
@@ -183,7 +227,7 @@ function stepMover(w, pb, swing, blade) {
         st.life = 0;
         clang(st.x, st.y);
       }
-    if (swing && !w.cl && hit(blade, box)) clang(w.x, GY - BALL_R);
+    if (swing && !w.cl && hit(blade, box)) clang(w.x, GY - w.r);
     w.cl = swing && hit(blade, box); // one clang per swing
   }
   if (!w.hurt && p.inv <= 0 && !p.dead && hit(pb, box)) {
@@ -195,7 +239,7 @@ function stepMover(w, pb, swing, blade) {
 /** The boss during its mad move: rears up while the move plays out, then goes dazed. */
 function madStep(b, rest) {
   b.hy += (rest - 26 - b.hy) * 0.1;
-  const busy = MAD[b.cfg.mad].busy;
+  const busy = PARTS[MAD[b.cfg.mad].part].busy;
   if (--b.t <= 0 && !(busy && busy() && b.t > -300)) {
     b.st = 'dazed';
     b.t = MAD_DAZED;
@@ -226,20 +270,13 @@ function zoneBox(z) {
   const k = Math.min(1, Math.max(0, (z.t - z.warn) / 6));
   return { x: z.x - z.w / 2, y: GY - z.h * k, w: z.w, h: z.h * k };
 }
-/** The moment a zone goes off: shake, dust and sound to match. */
+/** The moment a zone goes off: shake, dust, sparks, bits flying up and a sound, as its look says (LOOKS). */
 function erupt(z) {
-  if (z.kind === 'vines') {
-    shake = Math.max(shake, 6);
-    dust(z.x, GY, 10);
-    sfx.whoosh();
-  } else if (z.kind === 'lightning') {
-    shake = Math.max(shake, 5);
-    sparkle(z.x, GY - 10);
-    sfx.zap();
-  } else if (z.kind === 'fireball' || z.kind === 'rock') {
-    shake = Math.max(shake, z.kind === 'rock' ? 7 : 4);
-    dust(z.x, GY, 10);
-    const c = z.kind === 'rock' ? ['#6b6f6c', '#8a8f8b', '#4f5450'] : ['#ff6a2a', '#ffd24a', '#e8481c'];
+  const L = LOOKS[z.kind];
+  if (L.shake) shake = Math.max(shake, L.shake);
+  if (L.dust) dust(z.x, GY, L.dust);
+  if (L.spark) sparkle(z.x, GY - 10);
+  if (L.bits)
     for (let i = 0; i < 10; i++)
       parts.push({
         x: z.x + rnd(-20, 20),
@@ -250,10 +287,9 @@ function erupt(z) {
         life: 30,
         max: 30,
         r: rnd(2, 5),
-        c: c[i % 3],
+        c: L.bits[i % 3],
       });
-    sfx.thud();
-  }
+  if (L.sound) sfx[L.sound]();
 }
 /** One frame of every zone: count up, erupt, hurt Red Eye if he's in it, then sink back and go. */
 function stepZones(pb) {

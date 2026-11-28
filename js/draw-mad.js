@@ -1,11 +1,46 @@
-/* Drawing the mad moves: ground spots (rustling leaves as the warning, then vines). */
+/* Drawing the mad moves: their looks (LOOKS), and each part's drawing: ground spots, sky drops, the big wave, the
+   sweep and the roller. */
 'use strict';
+/* Looks: how each mad move looks and lands, by the name in its `look` (MAD in mad.js). A new move that reuses a part
+   usually needs only a new look here: colours, and for something new one small drawing.
+   - Ground spots: draw(z) draws the whole spot, the warning and the eruption.
+   - Sky drops: ring is the colour of the warning ring and the bits trickling down ('r, g, b'), draw(x, y) draws the
+     thing that falls.
+   - Ground spots and sky drops, when they go off (erupt() in mad.js): shake (how hard the screen shakes), dust
+     (puffs), spark, bits (the colours of the bits that fly up) and sound.
+   - Big wave: cols are its edge, body, shine and foam colours.
+   - Sweep: glow is the colour of the guide line and trail ('r, g, b'), cols the thing's own colours, and
+     draw(w, y, r, L) draws it at height y and size r.
+   - Roller: draw(w) draws it all. */
+const LOOKS = {
+  vines: { draw: drawVines, shake: 6, dust: 10, sound: 'whoosh' }, // Moss
+  lightning: { draw: drawLightning, shake: 5, spark: true, sound: 'zap' }, // Thunder
+  flame: { draw: drawFlame }, // the Fire Snake's little flames are ground spots too (draw-snake-kinds.js)
+  fireball: {
+    ring: '255, 170, 60', // orange sparks
+    draw: drawFireball,
+    shake: 4,
+    dust: 10,
+    bits: ['#ff6a2a', '#ffd24a', '#e8481c'],
+    sound: 'thud',
+  }, // Ember
+  rock: {
+    ring: '232, 224, 200', // dusty pebbles
+    draw: drawFallingRock,
+    shake: 7,
+    dust: 10,
+    bits: ['#6b6f6c', '#8a8f8b', '#4f5450'],
+    sound: 'thud',
+  }, // Shadow
+  water: { cols: ['#0b3a40', '#1f8f8a', '#56c7bf', '#e3fff7'] }, // Tide
+  fang: { glow: '199, 162, 255', cols: ['#3a2258', '#c7a2ff', '#ffffff'], draw: crescent }, // Master Fang
+  spikes: { draw: drawSpikeBall }, // the Spike King
+};
+
 function drawZones() {
   for (const z of zones)
-    if (z.kind === 'vines') drawVines(z);
-    else if (z.kind === 'flame') drawFlame(z);
-    else if (z.kind === 'lightning') drawLightning(z);
-    else if (z.sky) drawSkyDrop(z);
+    if (z.sky) drawSkyDrop(z, LOOKS[z.kind]);
+    else LOOKS[z.kind].draw(z);
 }
 /* Moss's Vine Grab: a patch of leaves that rustles harder as the vines get closer, then four vines shoot up,
    sway, and sink back down. */
@@ -82,14 +117,14 @@ function drawLightning(z) {
   if (up < z.act) bolt({ x: z.x, y: GY, life: Math.max(1, z.act - up) });
 }
 
-/* Fire Rain and Cave-in: a shadow grows on the ground (with a glint high above), then the fireball or rock drops in
-   during the last 12 frames of the warning, lands, and fades. */
-function drawSkyDrop(z) {
+/* Sky drops (Fire Rain, Cave-in): a shadow grows on the ground with bits trickling down onto it, then the thing
+   drops in during the last 12 frames of the warning, lands, and fades. */
+function drawSkyDrop(z, L) {
   const up = z.t - z.warn;
   if (up < 0) {
     const k = Math.min(1, z.t / Math.min(z.warn, 48)),
       rx = (z.w / 2) * (0.4 + 0.6 * k),
-      rgb = z.kind === 'rock' ? '232, 224, 200' : '255, 170, 60'; // dusty pebbles, or orange sparks
+      rgb = L.ring;
     ctx.fillStyle = `rgba(0, 0, 0, ${(0.15 + 0.3 * k).toFixed(3)})`;
     ell(z.x, GY + 2, rx, 6);
     // a bright ring round the shadow, so it shows up on dark ground too (steady, never flashing)
@@ -100,7 +135,7 @@ function drawSkyDrop(z) {
     ctx.stroke();
     if (-up <= 12) {
       const f = 1 - -up / 12;
-      drawFaller(z, z.x, TOP + (GY - 22 - TOP) * f * f);
+      L.draw(z.x, TOP + (GY - 22 - TOP) * f * f);
     } else {
       // pebbles or sparks trickling down onto the spot: something is coming from up there
       ctx.fillStyle = `rgba(${rgb}, ${(0.4 + 0.5 * k).toFixed(3)})`;
@@ -113,40 +148,40 @@ function drawSkyDrop(z) {
   const fade = Math.min(1, (z.warn + z.act + 14 - z.t) / 14);
   ctx.save();
   ctx.globalAlpha *= fade;
-  drawFaller(z, z.x, GY - 16);
+  L.draw(z.x, GY - 16);
   ctx.restore();
 }
-function drawFaller(z, x, y) {
-  if (z.kind === 'rock') {
-    ctx.fillStyle = '#3e423f';
-    ell(x, y, 22, 17);
-    ctx.fillStyle = '#7a807b';
-    ell(x - 1, y - 1, 19, 14);
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
-    ell(x - 7, y - 7, 7, 3);
-    ctx.strokeStyle = '#3e423f';
-    ctx.lineWidth = 1.6;
-    ctx.beginPath();
-    ctx.moveTo(x + 2, y - 10);
-    ctx.lineTo(x + 6, y);
-    ctx.lineTo(x + 2, y + 6);
-    ctx.stroke();
-  } else {
-    ctx.fillStyle = '#e8481c';
-    flameShape(x, y - 6, 9, 30);
-    ctx.fillStyle = '#ff6a2a';
-    circle(x, y, 15);
-    ctx.fillStyle = '#ffd24a';
-    circle(x - 2, y - 2, 8);
-  }
+function drawFallingRock(x, y) {
+  ctx.fillStyle = '#3e423f';
+  ell(x, y, 22, 17);
+  ctx.fillStyle = '#7a807b';
+  ell(x - 1, y - 1, 19, 14);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.22)';
+  ell(x - 7, y - 7, 7, 3);
+  ctx.strokeStyle = '#3e423f';
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.moveTo(x + 2, y - 10);
+  ctx.lineTo(x + 6, y);
+  ctx.lineTo(x + 2, y + 6);
+  ctx.stroke();
+}
+function drawFireball(x, y) {
+  ctx.fillStyle = '#e8481c';
+  flameShape(x, y - 6, 9, 30);
+  ctx.fillStyle = '#ff6a2a';
+  circle(x, y, 15);
+  ctx.fillStyle = '#ffd24a';
+  circle(x - 2, y - 2, 8);
 }
 
-/* Tide's Tidal Wave: a curling wall of water, front edge on the left. While it's still rising (the warning) it
-   stands behind Tide. */
-function drawTide(w) {
+/* The big wave (Tide's Tidal Wave): a curling wall of water, front edge on the left. While it's still rising (the
+   warning) it stands behind the boss. */
+function drawBigWave(w) {
   const x = w.x,
-    h = Math.max(4, w.h);
-  ctx.fillStyle = '#0b3a40';
+    h = Math.max(4, w.h),
+    [edge, body, shine, foam] = LOOKS[w.look].cols;
+  ctx.fillStyle = edge;
   ctx.beginPath();
   ctx.moveTo(x + 80, GY + 6);
   ctx.lineTo(x + 80, GY - h * 0.75);
@@ -156,7 +191,7 @@ function drawTide(w) {
   ctx.lineTo(x - 34, GY + 6);
   ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = '#1f8f8a';
+  ctx.fillStyle = body;
   ctx.beginPath();
   ctx.moveTo(x + 76, GY + 6);
   ctx.lineTo(x + 76, GY - h * 0.7);
@@ -165,22 +200,23 @@ function drawTide(w) {
   ctx.lineTo(x - 28, GY + 6);
   ctx.closePath();
   ctx.fill();
-  ctx.fillStyle = '#56c7bf';
+  ctx.fillStyle = shine;
   ell(x + 30, GY - h * 0.5, 24, h * 0.18);
-  ctx.fillStyle = '#e3fff7';
+  ctx.fillStyle = foam;
   for (let i = 0; i < 6; i++)
     circle(x - 26 + i * 16 + Math.sin(T * 0.3 + i) * 2, GY - h * (0.86 + 0.08 * Math.sin(i)), 4.5);
 }
 
-/* Master Fang's Fang Slash: a purple crescent at head height. While it forms (the warning) it grows in front of the
-   cobra and a dashed line shows how high it will fly; then it flies left with a fading trail. */
-function drawSlash(w) {
-  const y = GY - 70,
+/* The sweep (Master Fang's Fang Slash). While it forms (the warning) it grows in front of the boss and a dashed line
+   shows how high it will fly; then it flies left with a fading trail. */
+function drawSweep(w) {
+  const L = LOOKS[w.look],
+    y = GY - w.y,
     k = w.warn > 0 ? 1 - w.warn / MAD_WARN : 1,
     r = 30 * (0.35 + 0.65 * k);
   if (w.warn > 0) {
     ctx.save();
-    ctx.strokeStyle = `rgba(199, 162, 255, ${(0.25 + 0.4 * k).toFixed(3)})`;
+    ctx.strokeStyle = `rgba(${L.glow}, ${(0.25 + 0.4 * k).toFixed(3)})`;
     ctx.lineWidth = 3;
     ctx.setLineDash([14, 12]);
     ctx.beginPath();
@@ -190,14 +226,18 @@ function drawSlash(w) {
     ctx.restore();
   } else
     for (let i = 1; i <= 3; i++) {
-      ctx.fillStyle = `rgba(199, 162, 255, ${(0.24 - i * 0.06).toFixed(3)})`;
+      ctx.fillStyle = `rgba(${L.glow}, ${(0.24 - i * 0.06).toFixed(3)})`;
       ell(w.x + 8 + i * 20, y, 24 - i * 4, 20 - i * 4);
     }
+  L.draw(w, y, r, L);
+}
+/** Master Fang's sword wave: a crescent, outlined, with a bright edge. */
+function crescent(w, y, r, L) {
   ctx.lineCap = 'round';
   for (const [c, lw, a0, a1] of [
-    ['#3a2258', 13, 2.0, 4.28],
-    ['#c7a2ff', 8, 2.0, 4.28],
-    ['#ffffff', 3, 2.3, 3.98],
+    [L.cols[0], 13, 2.0, 4.28],
+    [L.cols[1], 8, 2.0, 4.28],
+    [L.cols[2], 3, 2.3, 3.98],
   ]) {
     ctx.strokeStyle = c;
     ctx.lineWidth = lw;
@@ -212,7 +252,7 @@ function drawSlash(w) {
    the coil and spikes turn, the eyes stay on top looking where it's going. */
 function drawSpikeBall(w) {
   const C = B.col,
-    R = BALL_R,
+    R = w.r,
     warm = w.warn > 0,
     s = warm ? 0.5 + 0.5 * Math.min(1, (MAD_WARN - w.warn) / 10) : 1,
     x = w.x + (warm ? Math.sin(T * 1.7) * 2.5 : 0),

@@ -37,16 +37,17 @@ function hpBar(s) {
   rr(s.x - w / 2, y, Math.max(3, w * f), 5, 2.5);
 }
 function wave(w) {
+  // a mad move's big wave, sweep or roller (draw-mad.js)
   if (w.big) {
-    drawTide(w);
+    drawBigWave(w);
     return;
   }
-  if (w.slash) {
-    drawSlash(w);
+  if (w.sweep) {
+    drawSweep(w);
     return;
   }
-  if (w.ball) {
-    drawSpikeBall(w);
+  if (w.roll) {
+    LOOKS[w.look].draw(w);
     return;
   }
   ctx.save();
@@ -103,8 +104,8 @@ function world() {
     }
   }
   for (const s of SEGS) if (s[1] > v0 && s[0] < v1) ground(s, Math.max(s[0], v0), Math.min(s[1], v1));
-  // the cobra isn't drawn while the Spike King is a rolling ball (drawn with the waves), or once a beaten boss's head
-  // has burst
+  // the cobra isn't drawn while it's curled up into a rolling ball (the Spike King's, drawn with the waves), or once
+  // a beaten boss's head has burst
   const cobra = boss && B && !B.cfg.duel && !B.gone && !curled();
   if (boss && B) {
     templeBack();
