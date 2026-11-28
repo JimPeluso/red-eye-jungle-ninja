@@ -141,18 +141,23 @@ async function hitDazed(page) {
   return [hp, await page.evaluate(() => __t.B.hp)];
 }
 
-for (const [n, boss, move] of [
-  [1, 'Moss', 'Vine Grab!'],
-  [2, 'Thunder', 'Lightning Call!'],
-  [3, 'Tide', 'Tidal Wave!'],
-  [4, 'Ember', 'Fire Rain!'],
-  [5, 'Shadow', 'Cave-in!'],
+// how: the dodge a player would use. walk = to safe ground, log = up onto a log, duck = hold Sneak, jump = jump it
+for (const [n, boss, move, how] of [
+  [1, 'Moss', 'Vine Grab!', 'walk'],
+  [2, 'Thunder', 'Lightning Call!', 'walk'],
+  [3, 'Tide', 'Tidal Wave!', 'log'],
+  [4, 'Ember', 'Fire Rain!', 'walk'],
+  [5, 'Shadow', 'Cave-in!', 'walk'],
+  [10, 'Master Fang', 'Fang Slash!', 'duck'],
+  [23, 'Spike King', 'Spike Ball!', 'jump'],
 ])
   test.describe(`Level ${n}: ${boss}'s ${move}`, () => {
+    const file = boss.toLowerCase().replace(' ', '-');
     test('standing still gets hit, after at least 0.75 s of warning', async ({ page }, testInfo) => {
       expect(await madBoss(page, n)).toBe(move);
+      await expect(page.locator('#bnU'), 'the banner says how to dodge it').not.toBeEmpty();
       await tick(page, 30);
-      await shot(page, testInfo, `mad-${boss.toLowerCase()}-warning`);
+      await shot(page, testInfo, `mad-${file}-warning`);
       const hitAt = await page.evaluate(() => {
         const hearts = __t.p.hearts;
         for (let f = 31; f < 400; f++) {
@@ -161,7 +166,7 @@ for (const [n, boss, move] of [
         }
         return null;
       });
-      await shot(page, testInfo, `mad-${boss.toLowerCase()}-hit`);
+      await shot(page, testInfo, `mad-${file}-hit`);
       expect(hitAt, 'it hit Red Eye standing still').not.toBe(null);
       expect(hitAt, 'frames of warning before it could hurt').toBeGreaterThanOrEqual(45);
     });
@@ -170,10 +175,38 @@ for (const [n, boss, move] of [
       await madBoss(page, n);
       const hearts = await page.evaluate(() => __t.p.hearts);
       // The dodge, with real inputs (the same key flags the keyboard sets), frame by frame inside the page.
-      const dodged = await page.evaluate(isTide => {
+      const dodged = await page.evaluate(how => {
         const t = __t,
           k = t.key;
-        if (isTide) {
+        if (how === 'duck') {
+          // hold Sneak until the sword wave has flown past
+          k.D = 1;
+          for (let i = 0; i < 300 && t.waves.some(w => w.slash); i++) t.step();
+          k.D = 0;
+          return !t.waves.some(w => w.slash);
+        }
+        if (how === 'jump') {
+          // jump when the ball is about 57px away (a standing jump works from about 28 to 86px), there and back
+          const ball = () => t.waves.find(w => w.ball);
+          let jumps = 0,
+            hold = 0;
+          for (let i = 0; i < 700 && ball(); i++) {
+            const w = ball(),
+              coming = w.warn === 0 && (w.vx < 0 ? w.x > t.p.x : w.x < t.p.x),
+              gap = w.vx < 0 ? w.x - 30 - (t.p.x + 29) : t.p.x + 5 - (w.x + 30);
+            if (t.p.on && coming && gap <= 57 && jumps < 2) {
+              window.press('J');
+              k.J = 1;
+              hold = 16;
+              jumps++;
+            }
+            if (hold > 0 && --hold === 0) k.J = 0;
+            t.step();
+          }
+          k.J = 0;
+          return jumps === 2 && !ball();
+        }
+        if (how === 'log') {
           // jump up onto the arena's first log (x 80-210, 108px up) and stay there while the wave rolls under
           t.respawnAt(150, 460);
           for (let i = 0; i < 3; i++) t.step();
@@ -199,7 +232,7 @@ for (const [n, boss, move] of [
         for (; f < 44; f++) t.step(); // let go and come to a stop, still inside the warning time
         // clear of every danger spot by the game's own rule: Red Eye's body (p.x+5 to p.x+29) outside each one
         return t.zones.every(z => t.p.x + 29 < z.x - z.w / 2 || t.p.x + 5 > z.x + z.w / 2);
-      }, boss === 'Tide');
+      }, how);
       expect(dodged, 'reached safe ground in time').toBe(true);
       const [before, after] = await hitDazed(page);
       expect(await page.evaluate(() => __t.p.hearts), 'no heart lost').toBe(hearts);

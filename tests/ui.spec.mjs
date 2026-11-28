@@ -3,7 +3,7 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { networkInterfaces } from 'node:os';
 import path from 'node:path';
-import { test, expect, openGame, tick, tapKey, mode, root, gameURL } from './helpers.mjs';
+import { test, expect, openGame, tick, tapKey, mode, root, gameURL, finishBoss } from './helpers.mjs';
 
 const p = page => page.evaluate(() => JSON.parse(JSON.stringify(__t.p)));
 const play = async (page, level = 0) => {
@@ -424,7 +424,7 @@ test.describe('saving', () => {
       __t.B.hp = 1;
       __t.bossHit(2);
     });
-    await tick(page, 160);
+    await finishBoss(page);
     expect(await mode(page)).toBe('win');
     await page.locator('#goW2').click(); // play this level again
     await page.keyboard.press('Escape');
@@ -527,7 +527,7 @@ test.describe('boss fights', () => {
         __t.B.hp = 1;
         __t.bossHit(2); // the winning hit
       });
-      for (let t = 0; t < 30 && (await mode(page)) === 'play'; t++) await tick(page, 10);
+      for (let t = 0; t < 40 && (await mode(page)) === 'play'; t++) await tick(page, 10); // the big finish
       expect(await mode(page)).toBe(ends);
     });
   }

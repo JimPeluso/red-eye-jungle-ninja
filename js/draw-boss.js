@@ -56,9 +56,10 @@ function templeFront() {
   wall(1015, 1700, false);
   torch(1040);
 }
-function cobraBody() {
-  const b = B,
-    hx = b.hx,
+/** The circles that make up the cobra's body, [x, y, radius], from the neck to the tail (off into the temple). A
+    beaten boss's body pops from the tail end (b.pop circles gone). */
+function bodyPts(b) {
+  const hx = b.hx,
     hy = b.hy,
     bx = hx + 82,
     by = GY - 26,
@@ -73,6 +74,12 @@ function cobraBody() {
     ]);
   }
   for (let x = bx + 22; x < 1080; x += 22) pts.push([x, by + Math.sin(x * 0.03 + b.tick * 0.08) * 4, 27]);
+  return pts;
+}
+function cobraBody() {
+  const b = B,
+    pts = bodyPts(b);
+  if (b.st === 'defeat') pts.length = Math.max(0, pts.length - b.pop);
   const C = b.col,
     spk = b.phase === 2 ? '#ff6a4d' : '#efe3c2';
   if (b.cfg.spikes)
@@ -109,7 +116,7 @@ function cobraBody() {
     }
   });
   ctx.fillStyle = C.bl;
-  for (let j = 0; j < 12; j++) {
+  for (let j = 0; j < Math.min(12, pts.length); j++) {
     const [x, y, r] = pts[j];
     circle(x - r * 0.42, y + 2, r * 0.42);
   }
@@ -122,7 +129,8 @@ function cobraHead() {
     open = b.st === 'windup' || b.st === 'lunge' || b.st === 'spit' || b.st === 'spikes' || b.st === 'burst';
   ctx.save();
   if (b.inv > 0 && (b.inv >> 2) % 2) ctx.globalAlpha = 0.55;
-  const shk = b.st === 'windup' ? Math.sin(b.tick * 1.3) * 2 : 0;
+  const ko = b.st === 'defeat',
+    shk = b.st === 'windup' ? Math.sin(b.tick * 1.3) * 2 : ko && b.dt < KO.shock ? Math.sin(b.dt * 2.5) * 4 : 0;
   ctx.translate(shk, 0);
   const C = b.col,
     spk = b.phase === 2 ? '#ff6a4d' : '#efe3c2';
@@ -190,12 +198,27 @@ function cobraHead() {
     ctx.lineTo(hx - 19.5, hy + 18);
     ctx.fill();
   }
-  ctx.fillStyle = mad || b.cfg.redEye ? '#ff3b30' : b.cfg.eye || '#ffe14d';
-  circle(hx - 24, hy + 1, 7.5);
-  ctx.fillStyle = '#14110f';
-  ell(hx - 23.4, hy + 1, 2, 5.6);
-  ctx.fillStyle = '#fff';
-  circle(hx - 21.5, hy - 2, 1.6);
+  if (ko) {
+    // knocked out: X eyes
+    ctx.fillStyle = '#fff';
+    circle(hx - 24, hy + 1, 8);
+    ctx.strokeStyle = '#14110f';
+    ctx.lineWidth = 3;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(hx - 28.5, hy - 3.5);
+    ctx.lineTo(hx - 19.5, hy + 5.5);
+    ctx.moveTo(hx - 19.5, hy - 3.5);
+    ctx.lineTo(hx - 28.5, hy + 5.5);
+    ctx.stroke();
+  } else {
+    ctx.fillStyle = mad || b.cfg.redEye ? '#ff3b30' : b.cfg.eye || '#ffe14d';
+    circle(hx - 24, hy + 1, 7.5);
+    ctx.fillStyle = '#14110f';
+    ell(hx - 23.4, hy + 1, 2, 5.6);
+    ctx.fillStyle = '#fff';
+    circle(hx - 21.5, hy - 2, 1.6);
+  }
   ctx.strokeStyle = C.o;
   ctx.lineWidth = 3;
   ctx.lineCap = 'round';
@@ -203,7 +226,18 @@ function cobraHead() {
   ctx.moveTo(hx - 34, hy - 8);
   ctx.lineTo(hx - 14, hy - 4);
   ctx.stroke();
-  if (!open && b.st !== 'stuck' && b.st !== 'dazed' && b.tick % 90 < 16) {
+  if (ko) {
+    // tongue hanging out
+    ctx.strokeStyle = '#e8302a';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(hx - 38, hy + 14);
+    ctx.quadraticCurveTo(hx - 46, hy + 22, hx - 44, hy + 32);
+    ctx.lineTo(hx - 48, hy + 37);
+    ctx.moveTo(hx - 44, hy + 32);
+    ctx.lineTo(hx - 40, hy + 37);
+    ctx.stroke();
+  } else if (!open && b.st !== 'stuck' && b.st !== 'dazed' && b.tick % 90 < 16) {
     ctx.strokeStyle = '#e8302a';
     ctx.lineWidth = 2.5;
     ctx.beginPath();
@@ -214,7 +248,7 @@ function cobraHead() {
     ctx.lineTo(hx - 60, hy + 16);
     ctx.stroke();
   }
-  if (b.st === 'stuck' || b.st === 'dazed') {
+  if (b.st === 'stuck' || b.st === 'dazed' || (ko && b.dt >= KO.shock)) {
     ctx.fillStyle = '#ffe14d';
     for (let i = 0; i < 3; i++) {
       const a = b.tick * 0.12 + i * 2.094;
