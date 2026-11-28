@@ -67,6 +67,7 @@ function summon() {
 }
 function bossHit(d) {
   const b = B;
+  if (b.st === 'defeat') return; // already beaten (a Thunder Strike can land during the finish)
   b.hp -= d || 1;
   b.inv = 24;
   gain(4);
@@ -75,27 +76,7 @@ function bossHit(d) {
   puff(b.hx, b.hy - 30, '#c7a2ff', 12);
   pop(b.hx, b.hy - 130, ['Ha!', 'Hiyah!', 'Take that!'][((b.hp % 3) + 3) % 3], '#fff');
   if (b.hp <= 0) {
-    b.st = 'defeat';
-    b.t = 150;
-    b.ug = false;
-    b.hole = null;
-    b.sink = 0;
-    b.fx = b.hx + 6;
-    b.fy = b.hy - 40;
-    b.fvy = -13;
-    b.fr = 0;
-    b.raise = 0;
-    b.sw = 0;
-    for (const s of snakes)
-      if (s.alive) {
-        s.alive = false;
-        puff(s.x, s.y - 12, '#9fe34d', 8);
-      }
-    waves = [];
-    spits = [];
-    zones = [];
-    pop(b.hx, b.hy - 160, b.cfg.rider ? 'Nooo!' : b.cfg.duel ? 'Argh!' : b.cfg.name + ' is beaten!', '#ffc928');
-    sfx.win();
+    startDefeat(b);
     return;
   }
   if (b.phase === 1 && b.hp <= b.max / 2) {
@@ -106,6 +87,134 @@ function bossHit(d) {
     if (p.hearts < 6) items.push({ x: 170, y: GY - 30, dy: -400, vy: 0, got: false });
   }
 }
+/* ---------- the big finish: a beaten boss ----------
+   0-12 frames   the winning hit throws its head back; it trembles, eyes turn to X's
+   12-52         dizzy: the head sways in circles with stars round it
+   52-70         it topples forward and crashes onto the ground
+   76 on         its body pops into fireworks from the tail to the head, then the head bursts in the biggest one,
+                 with confetti raining down. The final boss gets extra fireworks in the sky.
+   Then the win screen (or the champion screen). Master Fang flies off his cobra as soon as it's beaten. */
+const KO = { shock: 12, dizzy: 52, fall: 70, pops: 76, end: 200, finalEnd: 270 };
+function startDefeat(b) {
+  b.st = 'defeat';
+  b.dt = 0; // frames since the winning hit
+  b.pop = 0; // body circles popped so far, from the tail end
+  b.gone = false; // the head has burst
+  b.kx = Math.max(300, Math.min(640, b.hx)); // where the head sways while dizzy
+  b.t = 150; // only the dormant sword duel (duel.js) still counts this down
+  b.inv = 0;
+  b.ug = false;
+  b.hole = null;
+  b.sink = 0;
+  b.fx = b.hx + 6;
+  b.fy = b.hy - 40;
+  b.fvy = -13;
+  b.fr = 0;
+  b.raise = 0;
+  b.sw = 0;
+  for (const s of snakes)
+    if (s.alive) {
+      s.alive = false;
+      puff(s.x, s.y - 12, '#9fe34d', 8);
+    }
+  waves = [];
+  spits = [];
+  zones = [];
+  shake = Math.max(shake, 16);
+  firework(b.hx - 20, b.hy, ['#ffffff', '#ffe14d', '#fff3a8'], 20, 6); // the winning hit
+  if (b.cfg.rider || b.cfg.duel) pop(b.hx, b.hy - 160, b.cfg.rider ? 'Nooo!' : 'Argh!', '#ffc928');
+  sfx.roar();
+}
+function defeatStep(b) {
+  const t = ++b.dt,
+    end = b.cfg.final ? KO.finalEnd : KO.end;
+  b.fvy += 0.5; // Master Fang tumbling through the air
+  b.fy += b.fvy;
+  b.fx += 4.5;
+  b.fr += 0.22;
+  if (!b.cfg.duel) {
+    const cx = b.kx + 30,
+      cy = GY - 160;
+    if (t < KO.shock) {
+      b.hx += (cx - b.hx) * 0.3;
+      b.hy += (cy - b.hy) * 0.25;
+    } else if (t < KO.dizzy) {
+      const a = (t - KO.shock) * 0.22;
+      b.hx = cx + Math.sin(a) * 16;
+      b.hy = cy + (1 - Math.cos(a)) * 7;
+      if (t === KO.shock) b.sx = b.hx;
+    } else if (t <= KO.fall) {
+      if (t === KO.dizzy) {
+        b.sx = b.hx;
+        b.sy = b.hy;
+      }
+      const k = (t - KO.dizzy) / (KO.fall - KO.dizzy),
+        e = k * k; // falls faster and faster
+      b.hx = b.sx + (b.kx - 50 - b.sx) * e;
+      b.hy = b.sy + (GY - 32 - b.sy) * e;
+      if (t === KO.fall) {
+        shake = Math.max(shake, 14);
+        dust(b.hx - 30, GY, 22);
+        dust(b.hx + 50, GY, 14);
+        sfx.thud();
+      }
+    } else if (t >= KO.pops && !b.gone && (t - KO.pops) % 5 === 0) popBody(b);
+  }
+  if (b.gone && t < end - 30) {
+    // confetti in the boss's colours
+    const C = b.col;
+    for (let i = 0; i < 2; i++)
+      parts.push({
+        x: cam + rnd(0, viewW),
+        y: TOP - 6,
+        vx: rnd(-0.8, 0.8),
+        vy: rnd(1.4, 2.8),
+        g: 0.015,
+        life: 110,
+        max: 110,
+        r: rnd(2.5, 4),
+        c: [C.a, C.m, C.h, '#ffe14d', '#ffffff'][i + (t % 4)],
+      });
+    if (b.cfg.final && t % 14 === 0) {
+      const cols = [
+        ['#ff6a4d', '#ffe14d'],
+        ['#7ad7ff', '#ffffff'],
+        ['#c7a2ff', '#ffd1f0'],
+        ['#9fe34d', '#ffe14d'],
+      ][(t / 14) % 4];
+      firework(cam + rnd(120, viewW - 120), rnd(Math.max(TOP + 60, 40), 260), cols, 28, 5);
+      sfx.firework();
+    }
+  }
+  if (t >= end) {
+    if (b.cfg.final) champ();
+    else levelClear();
+  }
+}
+/** Pops the next few circles of a beaten boss's body, tail first, each in a little firework; the last pop bursts
+    the head. Circles hidden behind the temple wall go without a firework. */
+function popBody(b) {
+  const pts = bodyPts(b),
+    C = b.col,
+    cols = ['#ffe14d', C.m, C.h, '#ffffff'];
+  while (b.pop < pts.length && pts[pts.length - 1 - b.pop][0] > 1000) b.pop++;
+  for (let i = 0; i < 3 && b.pop < pts.length; i++) {
+    const [x, y] = pts[pts.length - 1 - b.pop];
+    b.pop++;
+    firework(x, y, cols, 14, 4);
+  }
+  sfx.firework();
+  if (b.pop < pts.length) return;
+  b.gone = true;
+  firework(b.hx, b.hy, ['#ffffff', C.m, C.h, '#ffe14d', C.b, '#ff6a4d'], 44, 7.5);
+  firework(b.hx, b.hy, ['#ffe14d', '#ffffff', '#fff3a8'], 22, 3.5);
+  puff(b.hx, b.hy, C.b, 16);
+  flash = 10; // one soft flash, not a flicker
+  shake = Math.max(shake, 12);
+  sfx.boom();
+  pop(b.hx, b.hy - 70, b.cfg.name + ' is beaten!', '#ffc928');
+}
+
 function bossStep() {
   const b = B,
     ph2 = b.phase === 2;
@@ -378,16 +487,7 @@ function bossStep() {
       break;
     }
     case 'defeat':
-      b.hx += (1000 - b.hx) * 0.03;
-      b.hy += (GY - 70 - b.hy) * 0.05;
-      b.fvy += 0.5;
-      b.fy += b.fvy;
-      b.fx += 4.5;
-      b.fr += 0.22;
-      if (--b.t <= 0) {
-        if (b.cfg.final) champ();
-        else levelClear();
-      }
+      defeatStep(b);
       break;
   }
 }

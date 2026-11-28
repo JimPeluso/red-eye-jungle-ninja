@@ -358,6 +358,9 @@ if (local && /[?&]test\b/.test(location.search))
     get zones() {
       return zones;
     },
+    get parts() {
+      return parts;
+    },
     key,
     tch,
     gp,

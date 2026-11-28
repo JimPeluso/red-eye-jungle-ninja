@@ -55,6 +55,7 @@ const BOSSES = [
   },
   {
     name: 'Master Fang',
+    mad: 'slash',
     sub: 'and his giant cobra',
     pal: 'castle',
     hp: 80,
@@ -75,6 +76,7 @@ const BOSSES = [
   },
   {
     name: 'Spike King',
+    mad: 'ball',
     sub: 'the giant spiked cobra',
     pal: 'throne',
     hp: 140,

@@ -1,5 +1,5 @@
 // Save and Continue (js/save.js): the game remembers where Red Eye got to, and the title screen offers Continue.
-import { test, expect, openGame, tick, mode } from './helpers.mjs';
+import { test, expect, openGame, tick, finishBoss, mode } from './helpers.mjs';
 
 /** Reloads the page (like closing and reopening the game) and pauses the clock again. */
 async function reopen(page) {
@@ -70,7 +70,7 @@ test('clearing a level saves the start of the next one, with the coins', async (
     __t.B.hp = 1;
     __t.bossHit(2);
   });
-  await tick(page, 160);
+  await finishBoss(page);
   expect(await mode(page)).toBe('win');
   await reopen(page);
   await expect(page.locator('#contInfo')).toHaveText('Level 2: The Treetops');
@@ -147,7 +147,7 @@ test('beating the game clears the save', async ({ page }) => {
     __t.B.hp = 1;
     __t.bossHit(2);
   });
-  await tick(page, 160);
+  await finishBoss(page);
   expect(await mode(page)).toBe('champ');
   expect(await page.evaluate(() => localStorage.getItem('redeye-save'))).toBe(null);
   await page.locator('#goC').click();

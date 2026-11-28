@@ -106,6 +106,14 @@ export async function run(page, n = 1) {
   }, n);
 }
 
+/** After the winning hit on a boss: steps through the big finish (js/boss.js, KO) until the win or champion screen. */
+export async function finishBoss(page) {
+  await page.evaluate(() => {
+    for (let i = 0; i < 400 && __t.mode === 'play'; i++) __t.step();
+    __t.draw();
+  });
+}
+
 /** Holds a key (by its KeyboardEvent.code) for n frames, then releases it. */
 export async function holdKey(page, code, n) {
   await page.keyboard.down(code);

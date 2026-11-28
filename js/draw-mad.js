@@ -171,3 +171,114 @@ function drawTide(w) {
   for (let i = 0; i < 6; i++)
     circle(x - 26 + i * 16 + Math.sin(T * 0.3 + i) * 2, GY - h * (0.86 + 0.08 * Math.sin(i)), 4.5);
 }
+
+/* Master Fang's Fang Slash: a purple crescent at head height. While it forms (the warning) it grows in front of the
+   cobra and a dashed line shows how high it will fly; then it flies left with a fading trail. */
+function drawSlash(w) {
+  const y = GY - 70,
+    k = w.warn > 0 ? 1 - w.warn / MAD_WARN : 1,
+    r = 30 * (0.35 + 0.65 * k);
+  if (w.warn > 0) {
+    ctx.save();
+    ctx.strokeStyle = `rgba(199, 162, 255, ${(0.25 + 0.4 * k).toFixed(3)})`;
+    ctx.lineWidth = 3;
+    ctx.setLineDash([14, 12]);
+    ctx.beginPath();
+    ctx.moveTo(Math.max(0, cam), y);
+    ctx.lineTo(w.x - 24, y);
+    ctx.stroke();
+    ctx.restore();
+  } else
+    for (let i = 1; i <= 3; i++) {
+      ctx.fillStyle = `rgba(199, 162, 255, ${(0.24 - i * 0.06).toFixed(3)})`;
+      ell(w.x + 8 + i * 20, y, 24 - i * 4, 20 - i * 4);
+    }
+  ctx.lineCap = 'round';
+  for (const [c, lw, a0, a1] of [
+    ['#3a2258', 13, 2.0, 4.28],
+    ['#c7a2ff', 8, 2.0, 4.28],
+    ['#ffffff', 3, 2.3, 3.98],
+  ]) {
+    ctx.strokeStyle = c;
+    ctx.lineWidth = lw;
+    ctx.beginPath();
+    ctx.arc(w.x + r * 0.6, y, r, a0, a1);
+    ctx.stroke();
+  }
+}
+
+/* The Spike King's Spike Ball: the cobra curled up tight (a coiled spiral) inside a ring of spikes, with its angry
+   eyes peeking out on top. It pops out of the poof and shakes while the spikes bristle (the warning), then rolls:
+   the coil and spikes turn, the eyes stay on top looking where it's going. */
+function drawSpikeBall(w) {
+  const C = B.col,
+    R = BALL_R,
+    warm = w.warn > 0,
+    s = warm ? 0.5 + 0.5 * Math.min(1, (MAD_WARN - w.warn) / 10) : 1,
+    x = w.x + (warm ? Math.sin(T * 1.7) * 2.5 : 0),
+    y = GY - R * s;
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+  ell(w.x, GY + 2, R * 0.95, 6);
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(s, s);
+  ctx.rotate(w.spin);
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * 6.283,
+      tip = R + 15 + (warm ? 2 + Math.sin(T * 0.8 + i) * 2 : 0);
+    for (const [c, wide, out] of [
+      [C.o, 0.24, 3],
+      ['#ff6a4d', 0.17, 0],
+    ]) {
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.moveTo(Math.cos(a - wide) * (R - 3), Math.sin(a - wide) * (R - 3));
+      ctx.lineTo(Math.cos(a) * (tip + out), Math.sin(a) * (tip + out));
+      ctx.lineTo(Math.cos(a + wide) * (R - 3), Math.sin(a + wide) * (R - 3));
+      ctx.fill();
+    }
+  }
+  ctx.fillStyle = C.o;
+  circle(0, 0, R + 3);
+  ctx.fillStyle = C.b;
+  circle(0, 0, R);
+  // the coiled body: a spiral, outlined, with its belly stripe
+  for (const [c, lw] of [
+    [C.o, 11],
+    [C.a, 8],
+    [C.bl, 2.5],
+  ]) {
+    ctx.strokeStyle = c;
+    ctx.lineWidth = lw;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (let a = 0; a <= 11.5; a += 0.25) {
+      const r = 3 + a * 2.6;
+      ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+  // the head peeking out on top
+  const d = w.vx > 0 ? 1 : -1,
+    hx = x + d * 10 * s,
+    hy = y - 14 * s;
+  ctx.fillStyle = C.o;
+  ell(hx, hy, 20 * s, 14 * s);
+  ctx.fillStyle = C.h;
+  ell(hx, hy, 17 * s, 11 * s);
+  for (const e of [-7, 7]) {
+    ctx.fillStyle = '#ff3b30';
+    circle(hx + e * s, hy, 4.6 * s);
+    ctx.fillStyle = '#14110f';
+    ell(hx + (e + d * 1.2) * s, hy, 1.3 * s, 3.4 * s);
+  }
+  ctx.strokeStyle = C.o;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(hx - 12 * s, hy - 9 * s);
+  ctx.lineTo(hx - 3 * s, hy - 5 * s);
+  ctx.moveTo(hx + 12 * s, hy - 9 * s);
+  ctx.lineTo(hx + 3 * s, hy - 5 * s);
+  ctx.stroke();
+}

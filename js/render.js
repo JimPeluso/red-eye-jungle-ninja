@@ -41,6 +41,14 @@ function wave(w) {
     drawTide(w);
     return;
   }
+  if (w.slash) {
+    drawSlash(w);
+    return;
+  }
+  if (w.ball) {
+    drawSpikeBall(w);
+    return;
+  }
   ctx.save();
   if (w.vx > 0) {
     ctx.translate(2 * w.x, 0);
@@ -95,10 +103,13 @@ function world() {
     }
   }
   for (const s of SEGS) if (s[1] > v0 && s[0] < v1) ground(s, Math.max(s[0], v0), Math.min(s[1], v1));
+  // the cobra isn't drawn while the Spike King is a rolling ball (drawn with the waves), or once a beaten boss's head
+  // has burst
+  const cobra = boss && B && !B.cfg.duel && !B.gone && !curled();
   if (boss && B) {
     templeBack();
     if (B.ug) burrowBack();
-    if (!B.cfg.duel) underground(B.ug && B.hole != null ? burrowNeck : cobraBody);
+    if (cobra) underground(B.ug && B.hole != null ? burrowNeck : cobraBody);
     templeFront();
   }
   for (const q of PLATS) {
@@ -124,9 +135,9 @@ function world() {
   if (boss && B && B.cfg.duel) duelFang();
   else if (boss && B) {
     if (B.st === 'defeat') {
-      cobraHead();
+      if (cobra) cobraHead();
       if (B.cfg.rider) fang();
-    } else {
+    } else if (cobra) {
       if (B.cfg.rider) fang();
       underground(cobraHead);
       if (B.ug) burrowFront();
@@ -152,8 +163,16 @@ function world() {
   for (const s of stars) shuriken(s.x, s.y, 9, s.r);
   for (const q of parts) {
     ctx.globalAlpha = Math.max(0, q.life / q.max);
-    ctx.fillStyle = q.c;
-    circle(q.x, q.y, q.r);
+    if (q.ring) {
+      ctx.strokeStyle = q.c;
+      ctx.lineWidth = 1 + q.lw * (q.life / q.max);
+      ctx.beginPath();
+      ctx.arc(q.x, q.y, q.r, 0, 6.2832);
+      ctx.stroke();
+    } else {
+      ctx.fillStyle = q.c;
+      circle(q.x, q.y, q.r);
+    }
   }
   ctx.globalAlpha = 1;
   grass(v0, v1, cx);

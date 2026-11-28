@@ -14,14 +14,25 @@
      Cave-in. Each zone: { kind, x (centre), w, h (how tall it erupts), t (frames so far), warn, act (frames it can
      hurt), sky? }.
    - The big wave (Tide's Tidal Wave): a `waves` entry with big: true. It rises during its warning, can't be
-     blocked, and is jumped over or ridden out on a log. */
+     blocked, and is jumped over or ridden out on a log.
+   - Movers (Master Fang's Fang Slash, the Spike King's Spike Ball): `waves` entries with slash: true or ball: true,
+     moved by stepMover() below. They wait out their warning, then fly or roll, and can only hurt once.
+   Each move has a `tip`, the line under its name in the banner that says how to dodge it. */
 const MAD = {
-  vines: { name: 'Vine Grab!', start: vineGrab }, // Moss
-  lightning: { name: 'Lightning Call!', start: lightningCall }, // Thunder
+  vines: { name: 'Vine Grab!', tip: 'Step off the leaves!', start: vineGrab }, // Moss
+  lightning: { name: 'Lightning Call!', tip: 'Get out of the circles!', start: lightningCall }, // Thunder
   // Tide stays mad (rearing) until its wave has rolled past Red Eye, then it's dazed
-  tide: { name: 'Tidal Wave!', start: tidalWave, busy: () => waves.some(w => w.big && w.x + 34 > p.x) },
-  fire: { name: 'Fire Rain!', start: b => skyDrops(b, 'fireball', 4) }, // Ember
-  rocks: { name: 'Cave-in!', start: b => skyDrops(b, 'rock', 5) }, // Shadow
+  tide: {
+    name: 'Tidal Wave!',
+    tip: 'Jump it, or get on a log!',
+    start: tidalWave,
+    busy: () => waves.some(w => w.big && w.x + 34 > p.x),
+  },
+  fire: { name: 'Fire Rain!', tip: 'Stay out of the shadows!', start: b => skyDrops(b, 'fireball', 4) }, // Ember
+  rocks: { name: 'Cave-in!', tip: 'Stay out of the shadows!', start: b => skyDrops(b, 'rock', 5) }, // Shadow
+  // Master Fang and the Spike King stay mad until their slash or ball is gone
+  slash: { name: 'Fang Slash!', tip: 'Duck! (Sneak)', start: fangSlash, busy: () => waves.some(w => w.slash) },
+  ball: { name: 'Spike Ball!', tip: 'Jump over it, there and back!', start: spikeBall, busy: () => curled() },
 };
 const MAD_EVERY = 3; // once mad, every 3rd attack is the mad move
 const MAD_WARN = 48; // frames of warning (0.8 s); the fair-play minimum is 45
@@ -29,7 +40,7 @@ const MAD_DAZED = 100; // frames the boss stays dazed afterwards (1.7 s)
 
 /** bossHit() calls this when a boss with a mad move reaches half health. */
 function getMad(b) {
-  showBanner(b.cfg.name + ' is mad!', MAD[b.cfg.mad].name, '', true);
+  showBanner(b.cfg.name + ' is mad!', MAD[b.cfg.mad].name, MAD[b.cfg.mad].tip, true);
   BN.t = 100;
   b.madIn = 1; // the first mad move comes straight away
 }
@@ -87,6 +98,98 @@ function skyDrops(b, kind, n) {
   );
   b.t = MAD_WARN + (n - 1) * 10 + 20;
   sfx.whoosh();
+}
+
+/* Master Fang, Fang Slash: he raises his sword while a purple sword wave forms in front of the cobra and a faint
+   line shows how high it will fly, then it flies across the arena at head height.
+   Dodge: duck (Sneak) and it goes over Red Eye's head. Standing on a log works too. */
+function fangSlash(b) {
+  waves.push({ slash: true, x: b.hx - 70, vx: -7.5, life: 400, warn: MAD_WARN });
+  b.raise = 1;
+  b.t = MAD_WARN + 20;
+  sfx.crackle();
+}
+/** The part of Fang's sword wave that hurts: hits a standing Red Eye, flies 8px over a ducking one. */
+const slashBox = w => ({ x: w.x - 28, y: GY - 96, w: 50, h: 52 });
+
+/* Spike King, Spike Ball: poof, he curls up into a giant spiky ball that shakes and growls (the warning), rolls
+   across the arena, bounces off the far wall and rolls back home, then uncurls, dizzy.
+   Dodge: jump over it, there and back (a standing jump clears it with about 11 frames to spare). */
+const BALL_R = 36,
+  BALL_SPEED = 5.5;
+const curled = () => waves.some(w => w.ball);
+function spikeBall(b) {
+  const x = b.hx + 30;
+  waves.push({ ball: true, x, home: x, vx: 0, life: 900, warn: MAD_WARN, spin: 0 });
+  b.t = MAD_WARN + 20;
+  poof(b, x);
+  sfx.rumble();
+}
+/** The part of the ball that hurts: its body, not the tips of its spikes. */
+const ballBox = w => ({ x: w.x - BALL_R + 6, y: GY - 2 * BALL_R + 8, w: 2 * BALL_R - 12, h: 2 * BALL_R - 8 });
+/** A puff of smoke in the boss's colours, where the cobra curls up into a ball or uncurls again. */
+function poof(b, x) {
+  puff(b.hx, b.hy, b.col.b, 14);
+  puff(x, GY - BALL_R, b.col.a, 16);
+  puff(x + 70, GY - 30, b.col.m, 10);
+  sfx.whoosh();
+}
+
+/** One frame of a mover (Fang's sword wave or the Spike King's ball). Sword and stars clang off the ball. */
+function stepMover(w, pb, swing, blade) {
+  if (w.warn > 0) {
+    if (--w.warn === 0) {
+      if (w.slash) {
+        B.raise = 0;
+        B.sw = 16; // Fang swings his sword
+        sfx.whoosh();
+      } else {
+        w.vx = -BALL_SPEED;
+        sfx.roar();
+      }
+    } else if (w.ball && w.warn % 16 === 0) sfx.rumble();
+    return;
+  }
+  w.x += w.vx;
+  w.life--;
+  if (w.slash) {
+    if (w.x < -80) w.life = 0;
+  } else {
+    w.spin += w.vx / BALL_R;
+    if (B.tick % 5 === 0) dust(w.x, GY, 2);
+    if (w.vx < 0 && w.x <= 10 + BALL_R) {
+      // bounces off the wall at the far end
+      w.x = 10 + BALL_R;
+      w.vx = BALL_SPEED;
+      shake = Math.max(shake, 10);
+      dust(w.x - 20, GY, 12);
+      sfx.thud();
+    } else if (w.vx > 0 && w.x >= w.home) {
+      // home again: uncurls
+      w.life = 0;
+      poof(B, w.x);
+      return;
+    }
+  }
+  const box = w.slash ? slashBox(w) : ballBox(w);
+  if (w.ball) {
+    const clang = (x, y) => {
+      pop(x, y - 24, 'Clang!', '#dfe6ea');
+      sparkle(x, y);
+      sfx.clang();
+    };
+    for (const st of stars)
+      if (st.life > 0 && hit({ x: st.x - 8, y: st.y - 8, w: 16, h: 16 }, box)) {
+        st.life = 0;
+        clang(st.x, st.y);
+      }
+    if (swing && !w.cl && hit(blade, box)) clang(w.x, GY - BALL_R);
+    w.cl = swing && hit(blade, box); // one clang per swing
+  }
+  if (!w.hurt && p.inv <= 0 && !p.dead && hit(pb, box)) {
+    hurt(w);
+    w.hurt = true; // a mad move costs at most 1 heart
+  }
 }
 
 /** The boss during its mad move: rears up while the move plays out, then goes dazed. */
