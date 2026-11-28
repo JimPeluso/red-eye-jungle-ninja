@@ -98,6 +98,7 @@ const BOSSES = [
   },
   {
     name: 'Bog',
+    mad: 'mud',
     sub: 'the giant swamp cobra',
     pal: 'swamp',
     hp: 60,
@@ -116,6 +117,7 @@ const BOSSES = [
   },
   {
     name: 'Venom',
+    mad: 'fog',
     sub: 'the giant purple cobra',
     pal: 'fortress',
     hp: 60,
@@ -143,6 +145,7 @@ const BOSSES = [
   },
   {
     name: 'Dune',
+    mad: 'sand',
     sub: 'the giant desert cobra',
     pal: 'desert',
     hp: 76,
@@ -152,6 +155,7 @@ const BOSSES = [
   },
   {
     name: 'Crystal',
+    mad: 'crystals',
     sub: 'the giant crystal cobra',
     pal: 'crystal',
     hp: 80,
@@ -217,6 +221,7 @@ const BOSSES = [
   },
   {
     name: 'Inferno',
+    mad: 'firewall',
     sub: 'the giant lava lake cobra',
     pal: 'lavalake',
     hp: 108,
@@ -236,6 +241,7 @@ const BOSSES = [
   },
   {
     name: 'Toxic',
+    mad: 'gas',
     sub: 'the giant poison cobra',
     pal: 'toxic',
     hp: 116,

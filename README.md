@@ -52,7 +52,13 @@ When a boss gets mad (half health), it has its own special move. Watch for the w
 - **Tide: Tidal Wave.** Jump over the wave, or hop on a log.
 - **Ember: Fire Rain.** Stay out of the shadows.
 - **Shadow: Cave-in.** Stay out of the shadows (there are more of them).
+- **Venom: Poison Fog.** Duck! The cloud floats over your head.
+- **Bog: Mud Wave.** Jump it!
 - **Master Fang: Fang Slash.** Duck! The sword wave flies over your head.
+- **Dune: Sandstorm.** Duck, fast!
+- **Crystal: Crystal Rain.** Stay out of the shadows (they're close together).
+- **Inferno: Fire Wall.** Jump over the flames!
+- **Toxic: Poison Gas.** Duck!
 - **Spike King: Spike Ball.** Jump over it, and again when it bounces back.
 
 After its move the boss is dizzy for a moment. That's your chance to hit it! And when you beat a boss, watch it pop into fireworks.

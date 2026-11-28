@@ -8,9 +8,10 @@
      thing that falls.
    - Ground spots and sky drops, when they go off (erupt() in mad.js): shake (how hard the screen shakes), dust
      (puffs), spark, bits (the colours of the bits that fly up) and sound.
-   - Big wave: cols are its edge, body, shine and foam colours.
-   - Sweep: glow is the colour of the guide line and trail ('r, g, b'), cols the thing's own colours, and
-     draw(w, y, r, L) draws it at height y and size r.
+   - Big wave: draw(w) draws it, using cols (curlWave: edge, body, shine and foam; mudWave: edge, body, shine and
+     blobs).
+   - Sweep: glow is the colour of the guide line and trail ('r, g, b'), cols the thing's own colours (dark to
+     light), and draw(w, y, r, L) draws it at height y and size r (r is 30 when it's fully formed).
    - Roller: draw(w) draws it all. */
 const LOOKS = {
   vines: { draw: drawVines, shake: 6, dust: 10, sound: 'whoosh' }, // Moss
@@ -32,9 +33,22 @@ const LOOKS = {
     bits: ['#6b6f6c', '#8a8f8b', '#4f5450'],
     sound: 'thud',
   }, // Shadow
-  water: { cols: ['#0b3a40', '#1f8f8a', '#56c7bf', '#e3fff7'] }, // Tide
+  water: { draw: curlWave, cols: ['#0b3a40', '#1f8f8a', '#56c7bf', '#e3fff7'] }, // Tide
   fang: { glow: '199, 162, 255', cols: ['#3a2258', '#c7a2ff', '#ffffff'], draw: crescent }, // Master Fang
   spikes: { draw: drawSpikeBall }, // the Spike King
+  fog: { glow: '170, 120, 240', cols: ['#2e1656', '#8456cf', '#c4a2ff'], draw: cloud, bubbles: true }, // Venom
+  mud: { draw: mudWave, cols: ['#2a1a0a', '#6b4a24', '#94703f', '#4a3016'] }, // Bog
+  sand: { glow: '230, 190, 120', cols: ['#7a4a1a', '#d4a258', '#f6dca0'], draw: cloud, streaks: true }, // Dune
+  crystal: {
+    ring: '150, 225, 255', // glints of crystal light
+    draw: drawCrystal,
+    shake: 4,
+    dust: 6,
+    bits: ['#8ae0ff', '#ffffff', '#4a6ae0'],
+    sound: 'clang',
+  }, // Crystal
+  firewall: { draw: fireWall, cols: ['#e8481c', '#ff9f43', '#ffe14d'] }, // Inferno
+  gas: { glow: '150, 230, 80', cols: ['#1f4a0a', '#6cc22e', '#d4ff8a'], draw: cloud, bubbles: true }, // Toxic
 };
 
 function drawZones() {
@@ -166,6 +180,32 @@ function drawFallingRock(x, y) {
   ctx.lineTo(x + 2, y + 6);
   ctx.stroke();
 }
+/** Crystal Rain: a crystal shard, point down, outlined, with a pale facet and a shine. */
+function drawCrystal(x, y) {
+  const shard = (w, h, c) => {
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.moveTo(x, y + h);
+    ctx.lineTo(x - w, y - h * 0.2);
+    ctx.lineTo(x - w * 0.45, y - h);
+    ctx.lineTo(x + w * 0.45, y - h);
+    ctx.lineTo(x + w, y - h * 0.2);
+    ctx.closePath();
+    ctx.fill();
+  };
+  shard(14, 24, '#101040');
+  shard(11, 20.5, '#5ab8f0');
+  ctx.fillStyle = '#d8f4ff';
+  ctx.beginPath();
+  ctx.moveTo(x, y + 20.5);
+  ctx.lineTo(x - 11, y - 4);
+  ctx.lineTo(x - 5, y - 20.5);
+  ctx.lineTo(x, y - 20.5);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+  ell(x - 4, y - 12, 2, 5);
+}
 function drawFireball(x, y) {
   ctx.fillStyle = '#e8481c';
   flameShape(x, y - 6, 9, 30);
@@ -175,9 +215,9 @@ function drawFireball(x, y) {
   circle(x - 2, y - 2, 8);
 }
 
-/* The big wave (Tide's Tidal Wave): a curling wall of water, front edge on the left. While it's still rising (the
-   warning) it stands behind the boss. */
-function drawBigWave(w) {
+/* A curling wave (Tide's Tidal Wave, Bog's Mud Wave): front edge on the left. While it's still rising (the warning)
+   it stands behind the boss. */
+function curlWave(w) {
   const x = w.x,
     h = Math.max(4, w.h),
     [edge, body, shine, foam] = LOOKS[w.look].cols;
@@ -207,6 +247,62 @@ function drawBigWave(w) {
     circle(x - 26 + i * 16 + Math.sin(T * 0.3 + i) * 2, GY - h * (0.86 + 0.08 * Math.sin(i)), 4.5);
 }
 
+/* Bog's Mud Wave: a lumpy mound of mud with a sloping back and a lip curling forward, dark blobs in it and drips
+   falling off the lip. Its crest is at its height (w.h) over the part that hurts. */
+function mudWave(w) {
+  const x = w.x,
+    h = Math.max(4, w.h),
+    [edge, body, shine, blob] = LOOKS[w.look].cols;
+  const mound = grow => {
+    ctx.beginPath();
+    ctx.moveTo(x + 72 + grow, GY + 6);
+    ctx.quadraticCurveTo(x + 50 + grow, GY - h * 0.6, x + 10, GY - h - grow);
+    ctx.quadraticCurveTo(x - 24 - grow, GY - h * 1.06 - grow, x - 36 - grow, GY - h * 0.6);
+    ctx.quadraticCurveTo(x - 24, GY - h * 0.66, x - 20 + grow, GY - h * 0.48);
+    ctx.quadraticCurveTo(x - 34 - grow, GY - h * 0.15, x - 32 - grow, GY + 6);
+    ctx.closePath();
+    ctx.fill();
+  };
+  ctx.fillStyle = edge;
+  mound(3);
+  ctx.fillStyle = body;
+  mound(0);
+  ctx.fillStyle = shine;
+  ell(x + 24, GY - h * 0.55, 18, h * 0.12);
+  ctx.fillStyle = blob;
+  for (const [dx, dy, r] of [
+    [-8, 0.3, 6],
+    [14, 0.75, 4.5],
+    [36, 0.25, 5],
+    [2, 0.85, 3.5],
+  ])
+    ell(x + dx, GY - h * dy, r, r * 0.7);
+  // drips off the lip
+  for (let i = 0; i < 3; i++) {
+    const fall = (T * 1.6 + i * 9) % 26;
+    circle(x - 34 + i * 5, GY - h * 0.6 + fall, 3 - fall * 0.08);
+  }
+}
+
+/* Inferno's Fire Wall: a row of tall flickering flames on a glowing base, as wide as the part that hurts. The tips
+   of the back flames never dip below its height, so it never looks lower than it is. */
+function fireWall(w) {
+  const h = Math.max(4, w.h),
+    [red, orange, yellow] = LOOKS[w.look].cols;
+  ctx.fillStyle = 'rgba(255, 120, 40, 0.35)';
+  ell(w.x + 2, GY + 2, 42, 7);
+  for (const [c, k, wide] of [
+    [red, 1.2, 9],
+    [orange, 0.85, 6.5],
+    [yellow, 0.5, 3.5],
+  ])
+    for (let i = 0; i < 5; i++) {
+      const flick = 0.95 + 0.07 * Math.sin(T * 0.5 + i * 2.1); // 0.88 to 1.02
+      ctx.fillStyle = c;
+      flameShape(w.x - 26 + i * 14, GY + 2, wide, h * k * flick * (i % 2 ? 0.95 : 1));
+    }
+}
+
 /* The sweep (Master Fang's Fang Slash). While it forms (the warning) it grows in front of the boss and a dashed line
    shows how high it will fly; then it flies left with a fading trail. */
 function drawSweep(w) {
@@ -230,6 +326,47 @@ function drawSweep(w) {
       ell(w.x + 8 + i * 20, y, 24 - i * 4, 20 - i * 4);
     }
   L.draw(w, y, r, L);
+}
+/** Poison Fog, Poison Gas and the Sandstorm: a puffy cloud, outlined, with little bubbles (or streaks of sand). Its
+    bottom stays 4px or more above a ducking Red Eye's head. */
+function cloud(w, y, r, L) {
+  const s = r / 30,
+    cx = w.x - 3,
+    [dark, mid, light] = L.cols,
+    puffs = [
+      [0, 0, 22],
+      [-20, 3, 16],
+      [20, 3, 16],
+      [-9, -14, 15],
+      [10, -13, 14],
+    ];
+  const bob = i => (Math.sin(T * 0.25 + i * 1.9) - 1) * 1.2; // only ever up, so the bottom stays put
+  ctx.fillStyle = dark;
+  puffs.forEach(([dx, dy, pr], i) => circle(cx + dx * s, y + (dy + bob(i)) * s, (pr + 3) * s));
+  ctx.fillStyle = mid;
+  puffs.forEach(([dx, dy, pr], i) => circle(cx + dx * s, y + (dy + bob(i)) * s, pr * s));
+  ctx.fillStyle = light;
+  puffs.forEach(([dx, dy, pr], i) => circle(cx + (dx - 3) * s, y + (dy - 4 + bob(i)) * s, pr * 0.45 * s));
+  if (L.bubbles)
+    for (let i = 0; i < 4; i++) {
+      ctx.fillStyle = i % 2 ? light : dark;
+      circle(cx + (((T * 0.7 + i * 17) % 44) - 22) * s, y + (-18 - ((T * 0.4 + i * 11) % 14)) * s, 2.6 * s);
+    }
+  if (L.streaks) {
+    ctx.strokeStyle = light;
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 3; i++) {
+      const x = cx + (((T * 4 + i * 23) % 60) - 30) * s,
+        yy = y + (i * 9 - 9) * s;
+      ctx.beginPath();
+      ctx.moveTo(x, yy);
+      ctx.lineTo(x + 16 * s, yy);
+      ctx.stroke();
+    }
+    ctx.fillStyle = dark;
+    for (let i = 0; i < 5; i++) circle(cx + (((T * 5 + i * 29) % 70) - 35) * s, y + ((i * 13) % 34) * s - 17 * s, 1.5);
+  }
 }
 /** Master Fang's sword wave: a crescent, outlined, with a bright edge. */
 function crescent(w, y, r, L) {
