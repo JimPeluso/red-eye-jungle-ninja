@@ -1,6 +1,8 @@
 // Mad moves (js/mad.js): each boss's extra attack once it's mad (half health).
-// Moss (Vine Grab) gets the detailed tests; then every boss with a mad move gets the same four checks.
+// Moss (Vine Grab) gets the detailed tests; then every boss with a mad move gets the same checks, from the table at
+// the bottom: the banner, the warning, standing still gets hit, a real dodge (tests/dodges.mjs), the dazed hit.
 import { test, expect, openGame, tick, shot } from './helpers.mjs';
+import { DODGES } from './dodges.mjs';
 
 /** Starts the fight with Moss (Level 1's boss) and lets the entrance finish. */
 async function fightMoss(page) {
@@ -141,16 +143,45 @@ async function hitDazed(page) {
   return [hp, await page.evaluate(() => __t.B.hp)];
 }
 
-// how: the dodge a player would use. walk = to safe ground, log = up onto a log, duck = hold Sneak, jump = jump it
-for (const [n, boss, move, how] of [
+// Every boss with a mad move, and the dodge a player would use (tests/dodges.mjs): walk to safe ground, a log, duck,
+// or jump it (with the jump's options).
+const MOVES = [
   [1, 'Moss', 'Vine Grab!', 'walk'],
   [2, 'Thunder', 'Lightning Call!', 'walk'],
   [3, 'Tide', 'Tidal Wave!', 'log'],
   [4, 'Ember', 'Fire Rain!', 'walk'],
   [5, 'Shadow', 'Cave-in!', 'walk'],
   [10, 'Master Fang', 'Fang Slash!', 'duck'],
-  [23, 'Spike King', 'Spike Ball!', 'jump'],
-])
+  // a standing jump clears the Spike Ball when it's 28 to 86px away; jump at 57, there and back
+  [23, 'Spike King', 'Spike Ball!', 'jump', { at: 57, times: 2 }],
+];
+
+test('every mad move has a name, a tip, a part, a look and a sound, and is in the table below', async ({ page }) => {
+  await openGame(page);
+  const { problems, mad } = await page.evaluate(() => {
+    const t = __t,
+      problems = [],
+      mad = [];
+    t.LEVELS.forEach((L, i) => {
+      const b = t.BOSSES[L.boss];
+      if (!b.mad) return;
+      mad.push([i + 1, b.name, t.MAD[b.mad]?.name]);
+      const m = t.MAD[b.mad],
+        part = m && t.PARTS[m.part];
+      if (!m) return problems.push(`${b.name}: no move called "${b.mad}"`);
+      if (!m.name || !m.tip) problems.push(`${b.name}: no name or tip`);
+      if (!part) problems.push(`${b.name}: no part called "${m.part}"`);
+      if (!t.LOOKS[m.look]) problems.push(`${b.name}: no look called "${m.look}"`);
+      const sound = m.sound || part?.def.sound;
+      if (typeof t.sfx[sound] !== 'function') problems.push(`${b.name}: no sound called "${sound}"`);
+    });
+    return { problems, mad };
+  });
+  expect(problems).toEqual([]);
+  expect(mad, 'every boss with a mad move gets the fair-play tests').toEqual(MOVES.map(m => m.slice(0, 3)));
+});
+
+for (const [n, boss, move, how, opts] of MOVES)
   test.describe(`Level ${n}: ${boss}'s ${move}`, () => {
     const file = boss.toLowerCase().replace(' ', '-');
     test('standing still gets hit, after at least 0.75 s of warning', async ({ page }, testInfo) => {
@@ -174,66 +205,8 @@ for (const [n, boss, move, how] of [
     test('a real dodge works, then the boss is dazed and can be hit', async ({ page }) => {
       await madBoss(page, n);
       const hearts = await page.evaluate(() => __t.p.hearts);
-      // The dodge, with real inputs (the same key flags the keyboard sets), frame by frame inside the page.
-      const dodged = await page.evaluate(how => {
-        const t = __t,
-          k = t.key;
-        if (how === 'duck') {
-          // hold Sneak until the sword wave has flown past
-          k.D = 1;
-          for (let i = 0; i < 300 && t.waves.some(w => w.slash); i++) t.step();
-          k.D = 0;
-          return !t.waves.some(w => w.slash);
-        }
-        if (how === 'jump') {
-          // jump when the ball is about 57px away (a standing jump works from about 28 to 86px), there and back
-          const ball = () => t.waves.find(w => w.ball);
-          let jumps = 0,
-            hold = 0;
-          for (let i = 0; i < 700 && ball(); i++) {
-            const w = ball(),
-              coming = w.warn === 0 && (w.vx < 0 ? w.x > t.p.x : w.x < t.p.x),
-              gap = w.vx < 0 ? w.x - 30 - (t.p.x + 29) : t.p.x + 5 - (w.x + 30);
-            if (t.p.on && coming && gap <= 57 && jumps < 2) {
-              window.press('J');
-              k.J = 1;
-              hold = 16;
-              jumps++;
-            }
-            if (hold > 0 && --hold === 0) k.J = 0;
-            t.step();
-          }
-          k.J = 0;
-          return jumps === 2 && !ball();
-        }
-        if (how === 'log') {
-          // jump up onto the arena's first log (x 80-210, 108px up) and stay there while the wave rolls under
-          t.respawnAt(150, 460);
-          for (let i = 0; i < 3; i++) t.step();
-          window.press('J');
-          k.J = 1;
-          for (let i = 0; i < 40; i++) t.step();
-          k.J = 0;
-          return t.p.on && !!t.p.plat;
-        }
-        // walk to the nearest safe ground: away from every danger spot
-        const cx = () => t.p.x + 17;
-        const safe = x => t.zones.every(z => Math.abs(x - z.x) > z.w / 2 + 17 + 10);
-        let target = null;
-        for (let d = 0; d < 800 && target == null; d += 4)
-          for (const x of [cx() - d, cx() + d]) if (x > 30 && x < t.B.hx - 60 && safe(x)) target = x;
-        let f = 0;
-        for (; f < 44 && Math.abs(cx() - target) > 6; f++) {
-          k.L = cx() > target ? 1 : 0;
-          k.R = cx() < target ? 1 : 0;
-          t.step();
-        }
-        k.L = k.R = 0;
-        for (; f < 44; f++) t.step(); // let go and come to a stop, still inside the warning time
-        // clear of every danger spot by the game's own rule: Red Eye's body (p.x+5 to p.x+29) outside each one
-        return t.zones.every(z => t.p.x + 29 < z.x - z.w / 2 || t.p.x + 5 > z.x + z.w / 2);
-      }, how);
-      expect(dodged, 'reached safe ground in time').toBe(true);
+      const dodged = await page.evaluate(DODGES[how], opts);
+      expect(dodged, `the dodge (${how}) worked`).toBe(true);
       const [before, after] = await hitDazed(page);
       expect(await page.evaluate(() => __t.p.hearts), 'no heart lost').toBe(hearts);
       expect(after, 'the sword hits the dazed boss').toBeLessThan(before);

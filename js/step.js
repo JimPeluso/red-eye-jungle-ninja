@@ -336,21 +336,16 @@ function step() {
     const b = B,
       live = b.st !== 'intro' && b.st !== 'defeat';
     for (const w of waves) {
-      if (w.slash || w.ball) {
-        stepMover(w, pb, swing, blade); // Master Fang's sword wave, the Spike King's ball (mad.js)
+      if (w.big || w.sweep || w.roll) {
+        stepMover(w, pb, swing, blade); // a mad move's big wave, sweep or roller (mad.js)
         continue;
       }
-      if (w.big && w.warn > 0) {
-        // Tide's Tidal Wave: the water rises behind Tide first (the warning), then it rolls
-        w.warn--;
-        w.h = 95 * (1 - w.warn / MAD_WARN);
-        continue;
-      }
+      // the boss's ground shock wave: jump it, or block it with the sword
       w.x += w.vx;
       w.life--;
       if (w.x < -60) w.life = 0;
-      const wb = w.big ? { x: w.x - 30, y: GY - w.h, w: 64, h: w.h } : { x: w.x - 14, y: GY - 46, w: 28, h: 46 };
-      if (!w.big && swing && hit(blade, wb)) {
+      const wb = { x: w.x - 14, y: GY - 46, w: 28, h: 46 };
+      if (swing && hit(blade, wb)) {
         w.life = 0;
         pop(w.x, GY - 70, 'Blocked!', '#bfefff');
         sparkle(w.x, GY - 24);
@@ -364,7 +359,7 @@ function step() {
       if (live) duelHits(swing, blade, pb, f0, cx);
     } else if (live) {
       const none = { x: -1e4, y: 0, w: 0, h: 0 },
-        ball = curled(), // the Spike King is a rolling ball: no head or body to hit (stepMover clangs the ball)
+        ball = curled(), // the boss is a rolling ball: no head or body to hit (stepMover clangs the ball)
         fb = b.cfg.rider ? { x: b.hx - 12, y: b.hy - 40 - 74, w: 36, h: 74 } : none,
         hb = ball ? none : { x: b.hx - 42, y: b.hy - 30, w: 74, h: 52 },
         stuck = b.st === 'stuck' || b.st === 'dazed';
